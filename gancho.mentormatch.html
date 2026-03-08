@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MentorMatch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;700&family=EB+Garamond:wght@400;500;600&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════
+   RESET & TOKENS
+═══════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink:      #0C0B09;
+  --paper:    #F4F1EB;
+  --cream:    #EDE9E0;
+  --rule:     #2A2520;
+  --gold:     #8B6914;
+  --gold-lt:  #C9A84C;
+  --muted:    #6B6358;
+  --faint:    #B8B0A4;
+  --red:      #9B1C1C;    /* The Economist red */
+  --col:      min(640px, 92vw);
+  --serif:    'Playfair Display', Georgia, serif;
+  --body:     'EB Garamond', Georgia, serif;
+  --sans:     'Barlow', sans-serif;
+}
+
+html, body {
+  width: 100%; height: 100%;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--body);
+  overflow: hidden;
+}
+
+/* ═══════════════════════════════════════
+   MASTHEAD STRIP (The Economist red bar)
+═══════════════════════════════════════ */
+#masthead {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: 4px;
+  background: var(--red);
+  z-index: 100;
+}
+
+/* ═══════════════════════════════════════
+   LOGO
+═══════════════════════════════════════ */
+#logo {
+  position: fixed; top: 18px; left: 36px;
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: .28em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.28);
+  z-index: 90;
+}
+#logo span { color: rgba(255,255,255,.7); }
+
+/* Edição/número — editorial detail */
+#edition {
+  position: fixed; top: 18px; right: 36px;
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 300;
+  letter-spacing: .18em;
+  color: rgba(255,255,255,.18);
+  text-transform: uppercase;
+  z-index: 90;
+}
+
+/* ═══════════════════════════════════════
+   PROGRESS BAR — fino, discreto
+═══════════════════════════════════════ */
+#progress-track {
+  position: fixed; top: 4px; left: 0; right: 0;
+  height: 1px;
+  background: rgba(255,255,255,.06);
+  z-index: 99;
+  opacity: 0;
+  transition: opacity .4s;
+}
+#progress-track.on { opacity: 1; }
+#progress-fill {
+  height: 100%;
+  background: var(--gold-lt);
+  transition: width .8s cubic-bezier(.4,0,.2,1);
+  width: 0%;
+}
+#progress-label {
+  position: fixed; top: 12px; right: 36px;
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 300;
+  letter-spacing: .2em;
+  color: rgba(255,255,255,.22);
+  z-index: 99;
+  opacity: 0;
+  transition: opacity .4s;
+  text-transform: uppercase;
+}
+#progress-label.on { opacity: 1; }
+
+/* ═══════════════════════════════════════
+   CONTENT PANEL — full width, mobile-first
+═══════════════════════════════════════ */
+#content-panel {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 72px 28px 80px;
+  z-index: 20;
+}
+
+/* ═══════════════════════════════════════
+   SPEECH BLOCK
+═══════════════════════════════════════ */
+#speech-block {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity .6s ease, transform .6s ease;
+  max-width: 520px;
+  width: 100%;
+}
+#speech-block.on { opacity: 1; transform: translateY(0); }
+
+/* Category label */
+#speech-cat {
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: .24em;
+  text-transform: uppercase;
+  color: var(--red);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+#speech-cat::before {
+  content: '';
+  display: inline-block;
+  width: 20px; height: 1px;
+  background: var(--red);
+}
+
+/* Main quote/speech */
+#speech-text {
+  font-family: var(--serif);
+  font-size: clamp(22px, 2.4vw, 30px);
+  font-weight: 400;
+  font-style: normal;
+  line-height: 1.55;
+  color: rgba(255,255,255,.92);
+  letter-spacing: -.01em;
+  margin-bottom: 0;
+}
+#speech-text em {
+  font-style: normal;
+  color: rgba(255,255,255,.5);
+}
+
+/* Cursor */
+.cur {
+  display: inline-block;
+  width: 2px; height: .85em;
+  background: var(--gold-lt);
+  vertical-align: middle;
+  margin-left: 2px;
+  animation: blink .9s step-end infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+/* Thin rule under speech */
+#speech-rule {
+  width: 0;
+  height: 1px;
+  background: rgba(255,255,255,.1);
+  margin-top: 28px;
+  transition: width 1s ease .4s;
+}
+#speech-block.on #speech-rule { width: 100%; }
+
+/* ═══════════════════════════════════════
+   INPUT — minimalista editorial
+═══════════════════════════════════════ */
+#input-area {
+  margin-top: 28px;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity .4s ease .2s, transform .4s ease .2s;
+  pointer-events: none;
+}
+#input-area.on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+#txt {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255,255,255,.15);
+  color: rgba(255,255,255,.82);
+  font-family: var(--body);
+  font-size: 18px;
+  font-weight: 400;
+  font-style: normal;
+  padding: 10px 36px 10px 0;
+  outline: none;
+  letter-spacing: .01em;
+  transition: border-color .3s;
+}
+#txt::placeholder {
+  color: rgba(255,255,255,.16);
+  font-style: normal;
+}
+#txt:focus { border-color: rgba(255,255,255,.35); }
+
+#send-btn {
+  position: absolute;
+  right: 0; top: 50%; transform: translateY(-50%);
+  background: transparent; border: none;
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: .2em;
+  color: rgba(255,255,255,.22);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color .2s;
+  padding: 8px 0;
+}
+#send-btn:hover { color: rgba(255,255,255,.7); }
+
+#input-wrap {
+  position: relative;
+}
+
+/* ═══════════════════════════════════════
+   CHOICES — editorial links, not buttons
+═══════════════════════════════════════ */
+#choices-area {
+  margin-top: 28px;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity .4s ease .2s, transform .4s ease .2s;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+#choices-area.on { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+.choice {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  cursor: pointer;
+  transition: border-color .2s;
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+}
+.choice::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 0;
+  background: rgba(255,255,255,.03);
+  transition: width .3s ease;
+}
+.choice:hover::before { width: 100%; }
+.choice:hover { border-color: rgba(255,255,255,.14); }
+
+.choice-num {
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 300;
+  letter-spacing: .12em;
+  color: rgba(255,255,255,.2);
+  flex-shrink: 0;
+  width: 18px;
+}
+.choice-text {
+  font-family: var(--body);
+  font-size: 16px;
+  font-weight: 400;
+  color: rgba(255,255,255,.65);
+  line-height: 1.5;
+  flex: 1;
+  transition: color .2s;
+}
+.choice:hover .choice-text { color: rgba(255,255,255,.88); }
+.choice-arrow {
+  font-family: var(--sans);
+  font-size: 13px;
+  color: rgba(255,255,255,.14);
+  transition: transform .2s, color .2s;
+  flex-shrink: 0;
+}
+.choice:hover .choice-arrow { transform: translateX(4px); color: rgba(255,255,255,.4); }
+
+/* ═══════════════════════════════════════
+   REACTION — subtle pull quote treatment
+═══════════════════════════════════════ */
+#reaction {
+  position: fixed;
+  bottom: 32px; left: 36px;
+  font-family: var(--serif);
+  font-size: 13px;
+  font-style: normal;
+  color: rgba(255,255,255,.22);
+  max-width: 200px;
+  opacity: 0;
+  transition: opacity .5s;
+  z-index: 50;
+  line-height: 1.6;
+}
+#reaction.on { opacity: 1; }
+#reaction::before {
+  content: '"';
+  font-size: 20px;
+  line-height: 0;
+  vertical-align: -6px;
+  margin-right: 2px;
+  color: rgba(255,255,255,.15);
+}
+
+/* ═══════════════════════════════════════
+   CHAPTER — full-screen editorial break
+═══════════════════════════════════════ */
+#chapter-screen {
+  position: fixed; inset: 0;
+  background: var(--ink);
+  z-index: 200;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+#chapter-screen.on { display: flex; }
+
+.ch-rule-top {
+  width: 1px; height: 60px;
+  background: rgba(255,255,255,.12);
+  margin-bottom: 32px;
+}
+.ch-number {
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 300;
+  letter-spacing: .3em;
+  color: var(--red);
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+.ch-title-txt {
+  font-family: var(--serif);
+  font-size: clamp(28px, 4vw, 48px);
+  font-weight: 400;
+  color: rgba(255,255,255,.88);
+  text-align: center;
+  max-width: 560px;
+  line-height: 1.25;
+  padding: 0 20px;
+}
+.ch-rule-bot {
+  width: 40px; height: 1px;
+  background: rgba(255,255,255,.12);
+  margin-top: 32px;
+}
+.ch-subtitle-txt {
+  font-family: var(--body);
+  font-size: clamp(13px, 1.4vw, 16px);
+  font-style: normal;
+  color: rgba(255,255,255,.32);
+  max-width: 480px;
+  text-align: center;
+  line-height: 1.8;
+  margin-top: 20px;
+  letter-spacing: .01em;
+}
+
+/* ═══════════════════════════════════════
+   STRENGTHS SCREEN
+═══════════════════════════════════════ */
+#strengths-screen {
+  position: fixed; inset: 0;
+  background: var(--ink);
+  z-index: 150;
+  display: none;
+  overflow-y: auto;
+}
+#strengths-screen.on { display: block; }
+
+#str-wrap {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 80px 40px 100px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+
+/* Header spans both columns */
+#str-header {
+  grid-column: 1 / -1;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  padding-bottom: 32px;
+  margin-bottom: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+#str-label {
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 300;
+  letter-spacing: .24em;
+  text-transform: uppercase;
+  color: var(--red);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+#str-label::before {
+  content: '';
+  display: inline-block;
+  width: 16px; height: 1px;
+  background: var(--red);
+}
+#str-headline {
+  font-family: var(--serif);
+  font-size: clamp(32px, 4vw, 52px);
+  font-weight: 400;
+  color: rgba(255,255,255,.9);
+  line-height: 1.1;
+  max-width: 60%;
+}
+#str-sub {
+  font-family: var(--body);
+  font-size: 14px;
+  font-style: normal;
+  color: rgba(255,255,255,.28);
+  line-height: 1.7;
+  max-width: 260px;
+  text-align: right;
+}
+
+#str-mirror {
+  grid-column: 1 / -1;
+  font-family: var(--body);
+  font-size: clamp(14px, 1.5vw, 16px);
+  font-style: normal;
+  color: rgba(255,255,255,.38);
+  line-height: 1.82;
+  border-left: 2px solid var(--red);
+  padding: 14px 0 14px 24px;
+  margin-bottom: 16px;
+}
+#str-mirror #str-mirror-name {
+  color: rgba(255,255,255,.75);
+  font-family: var(--serif);
+}
+
+#str-dominant-wrap {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 32px 0 40px;
+  border-top: 1px solid rgba(255,255,255,.06);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  margin-bottom: 40px;
+}
+#str-dominant-label {
+  font-family: var(--sans);
+  font-size: 10px;
+  letter-spacing: .28em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.22);
+  margin-bottom: 12px;
+}
+#str-dominant-name {
+  font-family: var(--serif);
+  font-size: clamp(32px, 4vw, 54px);
+  font-weight: 400;
+  color: var(--red);
+  letter-spacing: .02em;
+}
+
+/* Each strength — editorial card */
+.str-item {
+  padding: 28px 32px 28px 0;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  cursor: pointer;
+  transition: background .2s;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity .5s ease, transform .5s ease, background .2s;
+}
+.str-item.vis { opacity: 1; transform: translateY(0); }
+.str-item:nth-child(even) { padding: 28px 0 28px 32px; border-left: 1px solid rgba(255,255,255,.06); }
+
+.str-n {
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 300;
+  letter-spacing: .14em;
+  color: rgba(255,255,255,.18);
+  margin-bottom: 8px;
+}
+.str-name {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 500;
+  color: rgba(255,255,255,.82);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.str-toggle {
+  font-size: 16px;
+  color: rgba(255,255,255,.18);
+  transition: transform .3s, color .2s;
+}
+.str-item.open .str-toggle { transform: rotate(45deg); color: rgba(255,255,255,.5); }
+
+.str-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .5s ease;
+}
+.str-item.open .str-body { max-height: 260px; }
+
+.str-desc {
+  font-family: var(--body);
+  font-size: 14px;
+  font-weight: 400;
+  color: rgba(255,255,255,.42);
+  line-height: 1.82;
+  margin-top: 8px;
+}
+.str-tips {
+  font-family: var(--body);
+  font-size: 13px;
+  font-style: normal;
+  color: rgba(255,255,255,.28);
+  line-height: 1.8;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255,255,255,.05);
+}
+
+/* CTA */
+#str-footer {
+  grid-column: 1 / -1;
+  border-top: 1px solid rgba(255,255,255,.08);
+  padding-top: 36px;
+  margin-top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+#str-cta {
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.35);
+  background: transparent; border: none;
+  cursor: pointer;
+  transition: color .2s;
+  display: flex; align-items: center; gap: 12px;
+}
+#str-cta::after { content: '→'; font-size: 14px; transition: transform .2s; }
+#str-cta:hover { color: rgba(255,255,255,.8); }
+#str-cta:hover::after { transform: translateX(5px); }
+#str-note {
+  font-family: var(--body);
+  font-size: 13px;
+  font-style: normal;
+  color: rgba(255,255,255,.18);
+}
+
+/* ═══════════════════════════════════════
+   FAREWELL SCREEN
+═══════════════════════════════════════ */
+#farewell-screen {
+  position: fixed; inset: 0;
+  background: var(--ink);
+  z-index: 200;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px;
+}
+#farewell-screen.on { display: flex; }
+
+#fw-rule { width: 1px; height: 0; background: rgba(255,255,255,.1); margin-bottom: 44px; animation: grow-line .8s ease .2s forwards; }
+@keyframes grow-line { to { height: 64px; } }
+
+#fw-issue {
+  font-family: var(--sans);
+  font-size: 10px;
+  letter-spacing: .3em;
+  text-transform: uppercase;
+  color: var(--red);
+  margin-bottom: 20px;
+}
+#fw-headline {
+  font-family: var(--serif);
+  font-size: clamp(26px, 3.6vw, 44px);
+  font-weight: 400;
+  color: rgba(255,255,255,.88);
+  line-height: 1.2;
+  max-width: 520px;
+  margin-bottom: 20px;
+}
+#fw-body {
+  font-family: var(--body);
+  font-size: 16px;
+  font-style: normal;
+  color: rgba(255,255,255,.32);
+  max-width: 420px;
+  line-height: 1.82;
+  margin-bottom: 52px;
+}
+#fw-email-wrap {
+  display: flex;
+  gap: 0;
+  margin-bottom: 36px;
+  border-bottom: 1px solid rgba(255,255,255,.18);
+}
+#fw-email {
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--body);
+  font-size: 15px;
+  color: rgba(255,255,255,.75);
+  padding: 12px 0;
+  flex: 1;
+}
+#fw-email::placeholder { color: rgba(255,255,255,.2); }
+#fw-email-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: var(--sans);
+  font-size: 10px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.3);
+  padding: 12px 0 12px 20px;
+  transition: color .2s;
+}
+#fw-email-btn:hover { color: rgba(255,255,255,.7); }
+
+#fw-badge {
+  font-family: var(--sans);
+  font-size: 10px;
+  letter-spacing: .24em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.22);
+  border: 1px solid rgba(255,255,255,.08);
+  padding: 14px 32px;
+}
+
+/* ═══════════════════════════════════════
+   FADE IN/OUT
+═══════════════════════════════════════ */
+#fade {
+  position: fixed; inset: 0;
+  background: var(--ink);
+  z-index: 999;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 1.4s ease;
+}
+#fade.gone { opacity: 0; }
+
+/* ═══════════════════════════════════════
+   SOUND BTN
+═══════════════════════════════════════ */
+#sound-btn {
+  position: fixed; bottom: 28px; right: 36px;
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 300;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.18);
+  background: transparent; border: none;
+  cursor: pointer;
+  transition: color .2s;
+  z-index: 90;
+}
+#sound-btn:hover { color: rgba(255,255,255,.5); }
+
+/* ── Responsive / Mobile First ── */
+#choices-area { max-width: 520px; width: 100%; }
+#input-area { max-width: 520px; width: 100%; }
+
+@media (max-width: 700px) {
+  #content-panel { padding: 72px 20px 80px; }
+  #str-wrap { grid-template-columns: 1fr; padding: 60px 24px 80px; }
+  .str-item:nth-child(even) { padding: 28px 0; border-left: none; }
+  #str-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+  #str-sub { text-align: left; max-width: 100%; }
+  #str-headline { max-width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<!-- Red masthead strip -->
+<div id="masthead"></div>
+
+<!-- Logo -->
+<div id="logo"><span>Mentor</span>Match</div>
+<div id="edition">Processo de Seleção</div>
+
+<!-- Progress -->
+<div id="progress-track"><div id="progress-fill"></div></div>
+<div id="progress-label"></div>
+
+<!-- ── CONTENT PANEL (right) ── -->
+<div id="content-panel">
+  <div id="speech-block">
+    <div id="speech-cat">MentorMatch</div>
+    <div id="speech-text"></div>
+    <div id="speech-rule"></div>
+  </div>
+
+  <!-- Input -->
+  <div id="input-area">
+    <div id="input-wrap">
+      <input type="text" id="txt" placeholder="Sua resposta…" autocomplete="off"/>
+      <button id="send-btn" onclick="doSend()">Enviar</button>
+    </div>
+  </div>
+
+  <!-- Choices -->
+  <div id="choices-area"></div>
+</div>
+
+<!-- Reaction (bottom-left, photo side) -->
+<div id="reaction"></div>
+
+<!-- Chapter screen -->
+<div id="chapter-screen">
+  <div class="ch-rule-top"></div>
+  <div class="ch-number" id="ch-num"></div>
+  <div class="ch-title-txt" id="ch-title"></div>
+  <div class="ch-subtitle-txt" id="ch-subtitle"></div>
+  <div class="ch-rule-bot"></div>
+</div>
+
+<!-- Strengths screen -->
+<div id="strengths-screen">
+  <div id="str-wrap">
+    <div id="str-header">
+      <div>
+        <div id="str-label">Perfil de Liderança</div>
+        <h1 id="str-headline">Seus 5<br>Pontos Fortes</h1>
+      </div>
+      <div id="str-sub">Clique em cada um para aprofundar e entender como potencializá-lo.</div>
+    </div>
+    <div id="str-mirror">
+      <span id="str-mirror-name"></span> estes são os cinco padrões que dominam sua forma de operar. Não são rótulos — são vantagens que você já usa, muitas vezes sem saber.
+    </div>
+    <div id="str-dominant-wrap">
+      <div id="str-dominant-label"></div>
+      <div id="str-dominant-name"></div>
+    </div>
+    <div id="str-list-a"></div>
+    <div id="str-list-b"></div>
+    <div id="str-footer">
+      <button id="str-cta" onclick="afterStrengths()">Continuar</button>
+      <div id="str-note">MentorMatch · Análise de Perfil</div>
+    </div>
+  </div>
+</div>
+
+<!-- Farewell -->
+<div id="farewell-screen">
+  <div id="fw-rule"></div>
+  <div id="fw-issue">MentorMatch · Lista de Espera</div>
+  <h2 id="fw-headline"></h2>
+  <p id="fw-body"></p>
+  <div id="fw-email-wrap">
+    <input id="fw-email" type="email" placeholder="Seu melhor e-mail" autocomplete="email" />
+    <button id="fw-email-btn" onclick="const v=$('fw-email').value;if(v){S.user.contact=v;console.log('LEAD:',JSON.stringify(S.user),'PROFILE:',S.strengths.join());$('fw-email-wrap').innerHTML='<div style=\'font-family:var(--sans);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.35)\'>Recebido — entraremos em contato em breve</div>';}">Confirmar</button>
+  </div>
+  <div id="fw-badge">✦ Grupo Seleto · Acesso por Curadoria ✦</div>
+</div>
+
+<!-- Sound -->
+<button id="sound-btn" onclick="toggleAudio()">♩ Ambiente</button>
+
+<div id="fade"></div>
+
+<script>
+/* ═══════════════ AUDIO ═══════════════ */
+let actx, audioOn = false;
+function toggleAudio() {
+  if (!actx) { actx = new (window.AudioContext || window.webkitAudioContext)(); startAmb(); audioOn = true; }
+  else { audioOn ? actx.suspend() : actx.resume(); audioOn = !audioOn; }
+  document.getElementById('sound-btn').style.color = audioOn ? 'rgba(255,255,255,.55)' : 'rgba(255,255,255,.18)';
+}
+function startAmb() {
+  // Very subtle: low sine + triangle pad
+  [[48, .03, 'sine'], [96, .012, 'triangle'], [144, .008, 'triangle'], [192, .005, 'sine']].forEach(([f, g, t]) => {
+    const o = actx.createOscillator(), gain = actx.createGain();
+    o.type = t; o.frequency.value = f; gain.gain.value = g;
+    o.connect(gain); gain.connect(actx.destination); o.start();
+  });
+}
+
+/* ═══════════════ DATA ═══════════════ */
+const STRENGTHS = {
+  Realizador:   { desc:'Você transforma intenção em resultado com uma consistência rara. Sua capacidade de execução é o que separa líderes que planejam de líderes que constroem.', tips:'Defina sprints semanais com metas claras e mensuráveis. Documente suas vitórias — esse histórico de execução é seu maior diferencial.' },
+  Estrategista: { desc:'Você enxerga padrões onde outros veem ruído. Sua habilidade de antecipar movimentos e traçar rotas alternativas transforma empresas boas em empresas duradouras.', tips:'Reserve blocos semanais para pensar estrategicamente sem agenda operacional. Diversidade de perspectiva é o insumo da visão estratégica.' },
+  Comunicador:  { desc:'Você transforma ideias complexas em mensagens que movem pessoas. Esse talento é o coração de qualquer escala — com time, investidores ou mercado.', tips:'Construa sua autoridade pública: LinkedIn, eventos, posicionamento. Uma mensagem clara multiplica seu alcance sem esforço proporcional.' },
+  Empático:     { desc:'Você lê ambientes e pessoas com profundidade. Isso te dá vantagem silenciosa em negociações, retenção de talento e construção de cultura.', tips:'Use empatia como ferramenta estratégica — não apenas suporte emocional. Rituais de escuta estruturada com seu time e parceiros-chave.' },
+  Analista:     { desc:'Você toma decisões baseadas em evidências. Isso reduz o custo de erros estratégicos e aumenta a qualidade das apostas que você faz.', tips:'Invista em indicadores de negócio que você domina. Seu diferencial cresce quando combina análise rigorosa com velocidade de decisão.' },
+  Competitivo:  { desc:'Você é movido pela superação e pela excelência. Esse motor interno gera resultados acima da média quando canalizado nas apostas certas.', tips:'Defina quem são seus benchmarks e o que separa você deles hoje. Transforme competição externa em padrão interno de excelência.' },
+  Disciplinado: { desc:'Você mantém consistência mesmo quando a motivação oscila — a característica mais rara e valiosa em líderes que escalam.', tips:'Seus sistemas e processos são seu maior ativo intelectual. Documente-os, replique-os e ensine-os. Disciplina que escala precisa de método.' },
+  Influente:    { desc:'Você molda a forma como as pessoas ao seu redor pensam e agem. Isso vale ouro em construção de marca, cultura organizacional e liderança de mercado.', tips:'Construa sua presença pública com intencionalidade. Influência cresce com posicionamento claro e consistência de mensagem ao longo do tempo.' },
+  Estudioso:    { desc:'Você tem uma sede genuína por compreender. Isso te posiciona naturalmente à frente de tendências e te transforma em referência no que decide explorar.', tips:'Transforme aprendizado em produção de conhecimento. O que você aprende vira vantagem competitiva quando compartilhado e aplicado com velocidade.' },
+  Futurista:    { desc:'Você vive alguns passos à frente. Sua capacidade de imaginar cenários antes de se tornarem óbvios é dos talentos mais escassos no ambiente empresarial.', tips:'Conecte-se com outros futuristas e inovadores. Documente suas hipóteses sobre o futuro — esse histórico de visão é um ativo de posicionamento.' }
+};
+
+const GATHER = [
+  { k:'name',   q: () => 'Poucos empresários chegam até aqui.<br><br>Os que chegam, geralmente têm algo em comum: já foram longe, mas sabem que o próximo nível exige mais do que esforço — exige clareza sobre quem você realmente é como líder.<br><br>Com quem tenho o prazer de falar?' },
+  { k:'sector', q: d => `${d.name}, ótimo. Em que setor você atua?` },
+  { k:'block',  q: d => `Última pergunta antes de irmos para o que importa, ${d.name}.<br><br>Qual é o principal desafio entre você e o próximo nível do seu negócio?` },
+];
+
+const QUIZ = [
+  { q:'Você tem R$ 500 mil disponíveis hoje. Sem restrições. O que você faz?',
+    opts:[{t:'Realizador',   l:'Coloco em operação imediatamente — execução é o que gera resultado'},
+          {t:'Estrategista', l:'Mapeio onde está o maior gargalo e ataco com precisão'},
+          {t:'Comunicador',  l:'Invisto em marca, posicionamento e visibilidade'},
+          {t:'Disciplinado', l:'Estudo o cenário, monto um plano e só então movimento o capital'}]},
+  { q:'Dois sócios em potencial aparecem. Qual você escolhe?',
+    opts:[{t:'Competitivo',  l:'O que já escalou um negócio e sabe o que é vencer'},
+          {t:'Empático',     l:'O que constrói times excepcionais e mantém cultura'},
+          {t:'Analista',     l:'O que traz dados, métricas e visão financeira apurada'},
+          {t:'Futurista',    l:'O que enxerga tendências antes de todo mundo e pensa em 10 anos'}]},
+  { q:'Seu negócio está crescendo, mas a equipe começa a falhar. O que você faz primeiro?',
+    opts:[{t:'Estrategista', l:'Revejo o modelo — o problema é estrutural, não humano'},
+          {t:'Empático',     l:'Converso com cada pessoa — algo no ambiente está errado'},
+          {t:'Realizador',   l:'Identifico quem performa e reorganizo em torno deles'},
+          {t:'Influente',    l:'Trabalho o engajamento — time desmotivado é problema de cultura'}]},
+  { q:'Você descobre que um concorrente está crescendo mais rápido. Sua reação?',
+    opts:[{t:'Competitivo',  l:'Analiso o que ele fez e faço melhor — não aceito ficar atrás'},
+          {t:'Futurista',    l:'Ignoro — estou jogando um jogo diferente no longo prazo'},
+          {t:'Analista',     l:'Mapeio os números dele antes de tirar qualquer conclusão'},
+          {t:'Comunicador',  l:'Reforço meu posicionamento e narrativa — diferenciação é resposta'}]},
+  { q:'Você tem uma hora livre inesperada. O que você faz?',
+    opts:[{t:'Estudioso',    l:'Leio algo que estava na fila — aprendizado nunca para'},
+          {t:'Realizador',   l:'Resolvo uma pendência que estava me incomodando'},
+          {t:'Influente',    l:'Falo com alguém interessante — conexões surgem de imprevistos'},
+          {t:'Disciplinado', l:'Organizo prioridades e ajusto o plano da semana'}]},
+  { q:'Qual decisão você se arrepende de não ter tomado antes?',
+    opts:[{t:'Disciplinado', l:'Criar processos mais cedo — cresci no caos por tempo demais'},
+          {t:'Empático',     l:'Investir mais cedo em pessoas e cultura'},
+          {t:'Comunicador',  l:'Ter construído minha presença e autoridade antes'},
+          {t:'Analista',     l:'Ter olhado os números com mais rigor desde o início'}]},
+  { q:'O que você mais valoriza em uma mentoria estratégica?',
+    opts:[{t:'Estudioso',    l:'Acesso a conhecimento e frameworks que ainda não domino'},
+          {t:'Influente',    l:'Conexões com pessoas e mercados que abrem portas'},
+          {t:'Estrategista', l:'Visão externa e honesta sobre o meu negócio'},
+          {t:'Competitivo',  l:'Alguém que me desafie e eleve o padrão do que é possível'}]},
+  { q:'Daqui a cinco anos, como você imagina seu papel no mercado?',
+    opts:[{t:'Futurista',    l:'Referência em inovação — criando o que ainda não existe'},
+          {t:'Estudioso',    l:'Autoridade no setor — quem as pessoas buscam para aprender'},
+          {t:'Realizador',   l:'Resultado consolidado — construí algo concreto e duradouro'},
+          {t:'Analista',     l:'Gestor de alto desempenho — decisões baseadas em dados e sistemas'}]},
+];
+
+/* ═══════════════ STATE ═══════════════ */
+let S = { phase:'gather', gStep:0, user:{}, qStep:0, qAns:[], strengths:[] };
+
+/* ═══════════════ UTILS ═══════════════ */
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const $ = id => document.getElementById(id);
+
+async function type(html, speed = 20) {
+  const el = $('speech-text'); el.innerHTML = '';
+  const chars = [];
+  let inTag = false, buf = '';
+  for (const c of html) {
+    if (c === '<') { inTag = true; buf = '<'; }
+    else if (c === '>') { inTag = false; buf += '>'; chars.push({ tag: buf }); buf = ''; }
+    else if (inTag) buf += c;
+    else chars.push({ ch: c });
+  }
+  let rendered = '';
+  const cur = '<span class="cur"></span>';
+  for (const item of chars) {
+    if (item.tag) { rendered += item.tag; el.innerHTML = rendered + cur; }
+    else { rendered += item.ch; el.innerHTML = rendered + cur; await sleep(speed); }
+  }
+  el.innerHTML = rendered;
+}
+
+async function say(html, speed = 20) {
+  $('speech-block').classList.add('on');
+  await type(html, speed);
+}
+
+function hideAll() {
+  $('input-area').classList.remove('on');
+  $('choices-area').classList.remove('on');
+  $('choices-area').innerHTML = '';
+}
+
+function showInput() {
+  $('input-area').classList.add('on');
+  setTimeout(() => $('txt').focus(), 350);
+}
+
+function showChoices(items) {
+  const c = $('choices-area');
+  c.innerHTML = '';
+  items.forEach((item, i) => {
+    const div = document.createElement('div');
+    div.className = 'choice';
+    div.innerHTML = `<span class="choice-num">0${i + 1}</span><span class="choice-text">${item.l}</span><span class="choice-arrow">→</span>`;
+    div.onclick = () => pick(i);
+    c.appendChild(div);
+  });
+  c.classList.add('on');
+}
+
+function setProgress(cur, tot) {
+  const pct = Math.round(cur / tot * 100);
+  $('progress-track').classList.add('on');
+  $('progress-label').classList.add('on');
+  $('progress-fill').style.width = pct + '%';
+  $('progress-label').textContent = `ANÁLISE DE PERFIL · ${cur} DE ${tot}`;
+}
+function clearProgress() {
+  $('progress-track').classList.remove('on');
+  $('progress-label').classList.remove('on');
+}
+
+function showReaction(txt) {
+  const r = $('reaction');
+  r.textContent = txt;
+  r.classList.add('on');
+  setTimeout(() => r.classList.remove('on'), 3200);
+}
+
+async function chapter(num, title, subtitle) {
+  const cs = $('chapter-screen');
+  $('ch-num').textContent = `Parte ${num}`;
+  $('ch-title').textContent = title;
+  $('ch-subtitle').textContent = subtitle || '';
+  cs.classList.add('on');
+  await sleep(2800);
+  cs.classList.remove('on');
+  await sleep(500);
+}
+
+/* ═══════════════ GATHER ═══════════════ */
+async function nextGather() {
+  const step = S.gStep;
+  if (step >= GATHER.length) { await decisionPhase(); return; }
+  const q = GATHER[step];
+  const txt = typeof q.q === 'function' ? q.q(S.user) : q.q;
+  hideAll();
+  await say(txt);
+  await sleep(100);
+  showInput();
+}
+
+async function doSend() {
+  const val = $('txt').value.trim(); if (!val) return;
+  if (S.phase !== 'gather') return;
+  $('txt').value = '';
+  S.user[GATHER[S.gStep].k] = val;
+  hideAll();
+
+  const reactions = [
+    null,
+    'Que área interessante.',
+    'Esse nível de consciência é raro.'
+  ];
+  const r = reactions[S.gStep];
+  if (r) setTimeout(() => showReaction(r), 500);
+
+  S.gStep++;
+  await sleep(400);
+  await nextGather();
+}
+
+$('txt').addEventListener('keydown', e => { if (e.key === 'Enter') doSend(); });
+
+/* ═══════════════ DECISION ═══════════════ */
+async function decisionPhase() {
+  S.phase = 'decision';
+  hideAll();
+  await chapter('I', 'Seu perfil de liderança', 'Em 8 perguntas, vamos identificar os 5 padrões que definem como você pensa e decide.');
+  await say(`${S.user.name || 'você'}, hoje vou te revelar os seus 5 pontos fortes como líder e empresário.<br><br>São padrões que você já carrega — a maioria nunca para pra identificar com clareza. São 8 perguntas rápidas.<br><br>Pronto?`, 20);
+  await sleep(200);
+  showChoices([
+    { l: 'Sim, vamos lá' },
+    { l: 'Agora não' }
+  ]);
+}
+
+/* ═══════════════ QUIZ ═══════════════ */
+async function startQuiz() {
+  S.phase = 'quiz';
+  $('speech-cat').textContent = 'Diagnóstico';
+  hideAll();
+  await chapter('II', 'Mapeando seu perfil', 'Escolha a resposta que melhor reflete como você age, não como acha que deveria agir.');
+  await say(`Escolha a opção que mais se aproxima da sua realidade. Não existe certo ou errado.`, 18);
+  await sleep(1600);
+  await nextQuiz();
+}
+
+async function nextQuiz() {
+  if (S.qStep >= QUIZ.length) { await computeStrengths(); return; }
+  setProgress(S.qStep + 1, QUIZ.length);
+  const q = QUIZ[S.qStep];
+  hideAll();
+  await sleep(200);
+  await say(q.q, 18);
+  await sleep(150);
+  showChoices(q.opts.map(o => ({ l: o.l })));
+}
+
+/* ═══════════════ PICK ═══════════════ */
+async function pick(idx) {
+  if (S.phase === 'decision') {
+    hideAll();
+    if (idx === 0) await startQuiz();
+    else await farewell(false);
+  } else if (S.phase === 'quiz') {
+    const trait = QUIZ[S.qStep].opts[idx].t;
+    S.qAns.push(trait);
+    const react = ['Muito honesto.','Isso revela muito.','Faz sentido.','Perspectiva importante.','Isso é chave.','Anotado.','Relevante.','Visão clara.'];
+    showReaction(react[S.qStep] || 'Entendido.');
+    S.qStep++;
+    hideAll();
+    await sleep(280);
+    await nextQuiz();
+  } else if (S.phase === 'closing') {
+    hideAll();
+    await farewell(idx === 0);
+  }
+}
+
+/* ═══════════════ STRENGTHS ═══════════════ */
+async function computeStrengths() {
+  clearProgress(); hideAll();
+  const counts = {};
+  for (const t of S.qAns) counts[t] = (counts[t] || 0) + 1;
+  let sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([t]) => t).slice(0, 5);
+  const all = Object.keys(STRENGTHS);
+  while (sorted.length < 5) {
+    for (const t of all) { if (!sorted.includes(t)) { sorted.push(t); break; } }
+  }
+  S.strengths = sorted;
+  await chapter('III', 'Seus 5 Pontos Fortes', 'O que distingue os que chegam ao próximo nível não é esforço. É clareza.');
+  await say(`${S.user.name || 'você'}, terminamos.<br><br>O que vou te mostrar agora é um mapa do que você tem de melhor como empresário.<br>Use com cuidado.`, 20);
+  await sleep(2400);
+  renderStrengths(sorted);
+}
+
+function renderStrengths(list) {
+  // Personalized mirror intro
+  const name = S.user.name ? S.user.name.split(' ')[0] : 'você';
+  $('str-mirror-name').textContent = name + ',';
+  $('speech-cat').textContent = 'Seu Perfil';
+  $('strengths-screen').classList.add('on');
+
+  // Dominant trait pull quote
+  const dominant = list[0];
+  $('str-dominant-label').textContent = 'Seu padrão principal';
+  $('str-dominant-name').textContent = dominant;
+
+  // Split into two columns: first 3 left, last 2 right
+  const la = $('str-list-a'), lb = $('str-list-b');
+  la.innerHTML = ''; lb.innerHTML = '';
+  list.forEach((s, i) => {
+    const d = STRENGTHS[s];
+    const el = document.createElement('div');
+    el.className = 'str-item';
+    el.innerHTML = `<div class="str-n">0${i+1}</div><div class="str-name">${s} <span class="str-toggle">+</span></div><div class="str-body"><p class="str-desc">${d.desc}</p><p class="str-tips">${d.tips}</p></div>`;
+    el.addEventListener('click', () => {
+      const open = el.classList.contains('open');
+      document.querySelectorAll('.str-item.open').forEach(x => x.classList.remove('open'));
+      if (!open) el.classList.add('open');
+    });
+    (i < 3 ? la : lb).appendChild(el);
+    setTimeout(() => el.classList.add('vis'), 160 + i * 130);
+  });
+}
+
+function afterStrengths() {
+  $('strengths-screen').classList.remove('on');
+  closingPhase();
+}
+
+/* ═══════════════ CLOSING ═══════════════ */
+async function closingPhase() {
+  S.phase = 'closing';
+  $('speech-block').classList.add('on');
+  await say(`${S.user.name || 'você'}, esses cinco padrões que você acabou de ver são exatamente o que nossos mentores buscam em quem escolhem trabalhar.<br><br>Temos mentores especializados compatíveis com o seu perfil. Posso te incluir na lista para o próximo ciclo?`, 20);
+  await sleep(300);
+  showChoices([
+    { l: 'Sim, quero participar' },
+    { l: 'Não, obrigado' }
+  ]);
+}
+
+/* ═══════════════ FAREWELL ═══════════════ */
+async function farewell(yes) {
+  hideAll();
+  const firstName = (S.user.name || '').split(' ')[0];
+  if (yes) {
+    await say('Ótimo. Para finalizar, preciso do seu WhatsApp para nossa equipe entrar em contato.', 20);
+    await sleep(2200);
+  } else {
+    await say(`Sem problemas, ${firstName || 'você'}. Se mudar de ideia, deixa seu e-mail e te avisamos quando abrir uma vaga para o seu perfil.`, 20);
+    await sleep(2200);
+  }
+  $('fw-issue').textContent = yes ? 'MentorMatch · Inscrição' : 'MentorMatch · Lista de Espera';
+  $('fw-headline').textContent = yes ? `Quase lá, ${firstName || ''}.` : `${firstName || 'você'}, a porta continua aberta.`;
+  $('fw-body').innerHTML = yes
+    ? `Informe seu WhatsApp e nossa equipe entra em contato para confirmar sua participação.`
+    : `Quando uma vaga compatível com o seu perfil abrir, você será o primeiro a saber.`;
+  const emailWrap = $('fw-email-wrap');
+  if (emailWrap) {
+    emailWrap.style.display = 'block';
+    const inp = $('fw-email');
+    if (yes) {
+      inp.type = 'tel'; inp.placeholder = 'WhatsApp com DDD'; inp.autocomplete = 'tel';
+    } else {
+      inp.type = 'email'; inp.placeholder = 'Seu melhor e-mail'; inp.autocomplete = 'email';
+    }
+  }
+  $('farewell-screen').classList.add('on');
+}
+
+/* ═══════════════ INIT ═══════════════ */
+async function init() {
+  await sleep(600);
+  $('fade').classList.add('gone');
+  await sleep(1400);
+  await nextGather();
+}
+
+
+init();
+</script>
+</body>
+</html>
