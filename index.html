@@ -810,9 +810,9 @@ const STRENGTHS = {
 };
 
 const GATHER = [
-  { k:'name',   q: () => 'Poucos empresários chegam até aqui.<br><br>Os que chegam, geralmente têm algo em comum: já foram longe, mas sabem que o próximo nível exige mais do que esforço — exige clareza sobre quem você realmente é como líder.<br><br>Com quem tenho o prazer de falar?' },
-  { k:'sector', q: d => `${d.name}, ótimo. Em que setor você atua?` },
-  { k:'block',  q: d => `Última pergunta antes de irmos para o que importa, ${d.name}.<br><br>Qual é o principal desafio entre você e o próximo nível do seu negócio?` },
+  { k:'name',   p:'Seu nome…',                        q: () => 'Poucos empresários chegam até aqui.<br><br>Os que chegam, geralmente têm algo em comum: já foram longe, mas sabem que o próximo nível exige mais do que esforço — exige clareza sobre quem você realmente é como líder.<br><br>Com quem tenho o prazer de falar?' },
+  { k:'sector', p:'Ex: tecnologia, saúde, varejo…',   q: d => `${d.name}, ótimo. Em que setor você atua?` },
+  { k:'block',  p:'Descreva em uma frase…',           q: d => `Última pergunta antes de irmos para o que importa, ${d.name}.<br><br>Qual é o principal desafio entre você e o próximo nível do seu negócio?` },
 ];
 
 const QUIZ = [
@@ -936,6 +936,8 @@ function hideAll() {
 
 function showInput() {
   $('input-area').classList.add('on');
+  const step = GATHER[S.gStep];
+  if (step && step.p) $('txt').placeholder = step.p;
   setTimeout(() => $('txt').focus(), 350);
 }
 
