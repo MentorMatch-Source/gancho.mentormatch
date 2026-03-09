@@ -456,7 +456,7 @@ function openModal(idx) {
     </div>
     <div class="modal-field">
       <div class="modal-field-label">Pontos Fortes</div>
-      <div class="modal-strengths">${strengths.map(st => `<span class="modal-strength-tag">${st}</span>`).join('') || '—'}</div>
+      <div class="modal-strengths">${strengths.map((st, i) => `<span class="modal-strength-tag"><span style="color:rgba(255,255,255,.3);margin-right:5px;font-size:9px">${i+1}º</span>${st}</span>`).join('') || '—'}</div>
     </div>
     ${traitScoreHTML}
     ${s.ai_briefing ? `<div class="modal-field">
