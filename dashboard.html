@@ -118,6 +118,13 @@ tbody td{padding:14px 16px;font-size:13px;color:rgba(255,255,255,.65);font-weigh
 .modal-answer-row{font-size:12px;color:rgba(255,255,255,.5);line-height:1.5;padding:8px 12px;background:rgba(255,255,255,.02);border-left:2px solid rgba(255,255,255,.08)}
 .modal-answer-q{color:rgba(255,255,255,.3);font-size:11px;margin-bottom:2px;letter-spacing:.04em}
 .modal-answer-a{color:rgba(255,255,255,.65)}
+.modal-trait-scores{display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.modal-trait-row{display:flex;align-items:center;gap:10px}
+.modal-trait-rank{font-size:10px;color:rgba(255,255,255,.25);width:20px;text-align:right;flex-shrink:0}
+.modal-trait-name{font-size:12px;color:rgba(255,255,255,.6);width:100px;flex-shrink:0}
+.modal-trait-bar-wrap{flex:1;height:12px;background:rgba(255,255,255,.04);position:relative}
+.modal-trait-bar{height:100%;background:linear-gradient(90deg,var(--gold),rgba(201,168,76,.3));transition:width .6s}
+.modal-trait-count{font-size:11px;color:rgba(255,255,255,.3);width:36px;text-align:right;flex-shrink:0}
 .modal-badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 .modal-badge{font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:4px 10px;background:rgba(255,255,255,.05);color:rgba(255,255,255,.4)}
 .modal-badge.yes{background:rgba(155,28,28,.15);color:var(--red)}
@@ -414,13 +421,19 @@ function openModal(idx) {
   const date = new Date(s.created_at).toLocaleString('pt-BR');
   const dur = sessionDuration(s);
 
-  const answersHTML = answers.length ? `
+  // Calcular pontuação por trait a partir das respostas brutas
+  const traitCounts = {};
+  answers.forEach(t => { if (t) traitCounts[t] = (traitCounts[t] || 0) + 1; });
+  const traitsSorted = Object.entries(traitCounts).sort((a,b) => b[1]-a[1]);
+  const traitScoreHTML = traitsSorted.length ? `
     <div class="modal-field">
-      <div class="modal-field-label">Respostas do Quiz</div>
-      <div class="modal-answers">${answers.map((a, i) => `
-        <div class="modal-answer-row">
-          <div class="modal-answer-q">Pergunta ${i+1}</div>
-          <div class="modal-answer-a">${typeof a === 'object' ? (a.answer || a.choice || JSON.stringify(a)) : a}</div>
+      <div class="modal-field-label">Pontuação por Trait</div>
+      <div class="modal-trait-scores">${traitsSorted.map(([trait, count], i) => `
+        <div class="modal-trait-row">
+          <div class="modal-trait-rank">${i+1}º</div>
+          <div class="modal-trait-name">${trait}</div>
+          <div class="modal-trait-bar-wrap"><div class="modal-trait-bar" style="width:${Math.round(count/answers.length*100)}%"></div></div>
+          <div class="modal-trait-count">${count}/${answers.length}</div>
         </div>`).join('')}
       </div>
     </div>` : '';
@@ -452,7 +465,7 @@ function openModal(idx) {
       <div class="modal-field-label">Pontos Fortes</div>
       <div class="modal-strengths">${strengths.map(st => `<span class="modal-strength-tag">${st}</span>`).join('') || '—'}</div>
     </div>
-    ${answersHTML}
+    ${traitScoreHTML}
     ${s.ai_briefing ? `<div class="modal-field">
       <div class="modal-field-label">Análise de IA</div>
       <div class="modal-briefing">${s.ai_briefing}</div>
