@@ -353,11 +353,13 @@ function renderHours(sessions) {
     }
   });
   const max = Math.max(...counts) || 1;
+  // Labels fixos: 0h, 3h, 6h, 9h, 12h, 15h, 18h, 21h, 23h
+  const labelSet = new Set([0, 3, 6, 9, 12, 15, 18, 21, 23]);
   const chart = $('hours-chart');
   chart.innerHTML = counts.map((c, h) => `
     <div class="hour-bar-wrap" title="${h}h: ${c} acesso${c !== 1 ? 's' : ''}">
       <div class="hour-bar" style="height:${Math.round(c/max*100)}%"></div>
-      <div class="hour-label">${h % 6 === 0 ? h + 'h' : ''}</div>
+      <div class="hour-label">${labelSet.has(h) ? h + 'h' : ''}</div>
     </div>
   `).join('');
 }
@@ -425,18 +427,7 @@ function openModal(idx) {
   const traitCounts = {};
   answers.forEach(t => { if (t) traitCounts[t] = (traitCounts[t] || 0) + 1; });
   const traitsSorted = Object.entries(traitCounts).sort((a,b) => b[1]-a[1]);
-  const traitScoreHTML = traitsSorted.length ? `
-    <div class="modal-field">
-      <div class="modal-field-label">Pontuação por Trait</div>
-      <div class="modal-trait-scores">${traitsSorted.map(([trait, count], i) => `
-        <div class="modal-trait-row">
-          <div class="modal-trait-rank">${i+1}º</div>
-          <div class="modal-trait-name">${trait}</div>
-          <div class="modal-trait-bar-wrap"><div class="modal-trait-bar" style="width:${Math.round(count/answers.length*100)}%"></div></div>
-          <div class="modal-trait-count">${count}/${answers.length}</div>
-        </div>`).join('')}
-      </div>
-    </div>` : '';
+  const traitScoreHTML = '';
 
   $('modal-content').innerHTML = `
     <div style="font-family:var(--sans);font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--red);margin-bottom:24px">Perfil do Lead</div>
