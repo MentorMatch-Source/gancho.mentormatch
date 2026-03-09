@@ -690,23 +690,6 @@ html, body {
 }
 #fade.gone { opacity: 0; }
 
-/* ═══════════════════════════════════════
-   SOUND BTN
-═══════════════════════════════════════ */
-#sound-btn {
-  position: fixed; bottom: 28px; right: 36px;
-  font-family: var(--sans);
-  font-size: 10px;
-  font-weight: 300;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,.18);
-  background: transparent; border: none;
-  cursor: pointer;
-  transition: color .2s;
-  z-index: 90;
-}
-#sound-btn:hover { color: rgba(255,255,255,.5); }
 
 /* ── Responsive / Mobile First ── */
 #choices-area { max-width: 520px; width: 100%; }
@@ -729,7 +712,7 @@ html, body {
 
 <!-- Logo -->
 <div id="logo"><span>Mentor</span>Match</div>
-<div id="edition">Processo de Seleção</div>
+<div id="edition"></div>
 
 <!-- Progress -->
 <div id="progress-track"><div id="progress-fill"></div></div>
@@ -801,32 +784,16 @@ html, body {
   <p id="fw-body"></p>
   <div id="fw-email-wrap">
     <input id="fw-email" type="email" placeholder="Seu melhor e-mail" autocomplete="email" />
-    <button id="fw-email-btn" onclick="const v=$('fw-email').value;if(v){S.user.contact=v;console.log('LEAD:',JSON.stringify(S.user),'PROFILE:',S.strengths.join());$('fw-email-wrap').innerHTML='<div style=\'font-family:var(--sans);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.35)\'>Recebido — entraremos em contato em breve</div>';}">Confirmar</button>
+    <button id="fw-email-btn" onclick="submitLead()">Confirmar</button>
   </div>
   <div id="fw-badge">✦ Grupo Seleto · Acesso por Curadoria ✦</div>
 </div>
 
 <!-- Sound -->
-<button id="sound-btn" onclick="toggleAudio()">♩ Ambiente</button>
 
 <div id="fade"></div>
 
 <script>
-/* ═══════════════ AUDIO ═══════════════ */
-let actx, audioOn = false;
-function toggleAudio() {
-  if (!actx) { actx = new (window.AudioContext || window.webkitAudioContext)(); startAmb(); audioOn = true; }
-  else { audioOn ? actx.suspend() : actx.resume(); audioOn = !audioOn; }
-  document.getElementById('sound-btn').style.color = audioOn ? 'rgba(255,255,255,.55)' : 'rgba(255,255,255,.18)';
-}
-function startAmb() {
-  // Very subtle: low sine + triangle pad
-  [[48, .03, 'sine'], [96, .012, 'triangle'], [144, .008, 'triangle'], [192, .005, 'sine']].forEach(([f, g, t]) => {
-    const o = actx.createOscillator(), gain = actx.createGain();
-    o.type = t; o.frequency.value = f; gain.gain.value = g;
-    o.connect(gain); gain.connect(actx.destination); o.start();
-  });
-}
 
 /* ═══════════════ DATA ═══════════════ */
 const STRENGTHS = {
@@ -892,7 +859,46 @@ const QUIZ = [
 ];
 
 /* ═══════════════ STATE ═══════════════ */
-let S = { phase:'gather', gStep:0, user:{}, qStep:0, qAns:[], strengths:[] };
+/* ═══════════════ SUPABASE CONFIG ═══════════════ */
+const SUPA_URL = 'https://vjoldjxotyjnmojxajnn.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqb2xkanhvdHlqbm1vanhham5uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwMDk2MTQsImV4cCI6MjA4ODU4NTYxNH0.HSY7vmCckK1TMAAcU6pqxBsyR5pbaZJl1yLxJF-LVVo';
+
+const SUPA_READY = SUPA_KEY !== 'UNCONFIGURED';
+
+async function supaInsert(table, data) {
+  if (!SUPA_READY) return null;
+  try {
+    const r = await fetch(SUPA_URL + '/rest/v1/' + table, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPA_KEY,
+        'Authorization': 'Bearer ' + SUPA_KEY,
+        'Prefer': 'return=representation'
+      },
+      body: JSON.stringify(data)
+    });
+    return r.json();
+  } catch(e) { return null; }
+}
+
+async function supaUpdate(id, data) {
+  if (!SUPA_READY || !id) return;
+  try {
+    await fetch(SUPA_URL + '/rest/v1/sessions?id=eq.' + id, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPA_KEY,
+        'Authorization': 'Bearer ' + SUPA_KEY
+      },
+      body: JSON.stringify(data)
+    });
+  } catch(e) {}
+}
+
+/* ═══════════════ STATE ═══════════════ */
+let S = { phase:'gather', gStep:0, user:{}, qStep:0, qAns:[], strengths:[], session_id: null };
 
 /* ═══════════════ UTILS ═══════════════ */
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -1013,6 +1019,12 @@ $('txt').addEventListener('keydown', e => { if (e.key === 'Enter') doSend(); });
 /* ═══════════════ DECISION ═══════════════ */
 async function decisionPhase() {
   S.phase = 'decision';
+  if (S.session_id) supaUpdate(S.session_id, {
+    last_step: 'decision',
+    name: S.user.name,
+    sector: S.user.sector,
+    block: S.user.block
+  }).catch(()=>{});
   hideAll();
   await chapter('I', 'Seu perfil de liderança', 'Em 8 perguntas, vamos identificar os 5 padrões que definem como você pensa e decide.');
   await say(`${S.user.name || 'você'}, hoje vou te revelar os seus 5 pontos fortes como líder e empresário.<br><br>São padrões que você já carrega — a maioria nunca para pra identificar com clareza. São 8 perguntas rápidas.<br><br>Pronto?`, 20);
@@ -1026,6 +1038,7 @@ async function decisionPhase() {
 /* ═══════════════ QUIZ ═══════════════ */
 async function startQuiz() {
   S.phase = 'quiz';
+  if (S.session_id) supaUpdate(S.session_id, { last_step: 'quiz', accepted_quiz: true }).catch(()=>{});
   $('speech-cat').textContent = 'Diagnóstico';
   hideAll();
   await chapter('II', 'Mapeando seu perfil', 'Escolha a resposta que melhor reflete como você age, não como acha que deveria agir.');
@@ -1077,6 +1090,11 @@ async function computeStrengths() {
     for (const t of all) { if (!sorted.includes(t)) { sorted.push(t); break; } }
   }
   S.strengths = sorted;
+  if (S.session_id) supaUpdate(S.session_id, {
+    last_step: 'strengths',
+    quiz_answers: S.qAns,
+    strengths: sorted
+  }).catch(()=>{});
   await chapter('III', 'Seus 5 Pontos Fortes', 'O que distingue os que chegam ao próximo nível não é esforço. É clareza.');
   await say(`${S.user.name || 'você'}, terminamos.<br><br>O que vou te mostrar agora é um mapa do que você tem de melhor como empresário.<br>Use com cuidado.`, 20);
   await sleep(2400);
@@ -1121,6 +1139,7 @@ function afterStrengths() {
 /* ═══════════════ CLOSING ═══════════════ */
 async function closingPhase() {
   S.phase = 'closing';
+  if (S.session_id) supaUpdate(S.session_id, { last_step: 'closing' }).catch(()=>{});
   $('speech-block').classList.add('on');
   await say(`${S.user.name || 'você'}, esses cinco padrões que você acabou de ver são exatamente o que nossos mentores buscam em quem escolhem trabalhar.<br><br>Temos mentores especializados compatíveis com o seu perfil. Posso te incluir na lista para o próximo ciclo?`, 20);
   await sleep(300);
@@ -1159,13 +1178,103 @@ async function farewell(yes) {
   $('farewell-screen').classList.add('on');
 }
 
+/* ═══════════════ SUBMIT LEAD ═══════════════ */
+async function submitLead() {
+  const v = $('fw-email').value.trim();
+  if (!v) return;
+  S.user.contact = v;
+  const isWhatsapp = $('fw-email').type === 'tel';
+
+  $('fw-email-wrap').innerHTML = '<div style="font-family:var(--sans);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.28)">Analisando perfil...</div>';
+
+  let briefing = '';
+  try {
+    // Step 1 — Claude gera briefing do lead
+    const profileData = { nome: S.user.name, contato: S.user.contact, setor: S.user.sector, desafio: S.user.block, pontos_fortes: S.strengths };
+    const briefingRes = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 800,
+        system: 'Você é um assistente da MentorMatch. Recebe dados de um lead e gera um briefing executivo em português para o time de vendas. Máximo 180 palavras, texto limpo sem markdown.',
+        messages: [{ role: 'user', content: 'Gere um briefing deste lead: ' + JSON.stringify(profileData, null, 2) }]
+      })
+    });
+    const bd = await briefingRes.json();
+    briefing = bd.content?.[0]?.text || '';
+  } catch(e) { console.warn('Briefing error:', e); }
+
+  // Step 2 — Salvar no Supabase (completo)
+  try {
+    const sessionData = {
+      last_step: 'completed',
+      completed: true,
+      name: S.user.name,
+      sector: S.user.sector,
+      block: S.user.block,
+      contact: S.user.contact,
+      contact_type: isWhatsapp ? 'whatsapp' : 'email',
+      quiz_answers: S.qAns,
+      strengths: S.strengths,
+      accepted_mentoring: isWhatsapp,
+      ai_briefing: briefing
+    };
+    if (S.session_id) {
+      await supaUpdate(S.session_id, sessionData);
+    } else {
+      const res = await supaInsert('sessions', sessionData);
+      if (res?.[0]?.id) S.session_id = res[0].id;
+    }
+  } catch(e) { console.warn('Supabase save error:', e); }
+
+  // Step 3 — Enviar e-mail via Gmail MCP
+  try {
+    const emailBody =
+      'NOVO LEAD — MentorMatch\n\n' +
+      'Nome: ' + (S.user.name || '—') + '\n' +
+      (isWhatsapp ? 'WhatsApp: ' : 'E-mail: ') + S.user.contact + '\n' +
+      'Setor: ' + (S.user.sector || '—') + '\n' +
+      'Desafio: ' + (S.user.block || '—') + '\n' +
+      'Pontos fortes: ' + S.strengths.join(', ') + '\n\n' +
+      '─────────────────────────\n' +
+      'ANÁLISE DE IA\n' +
+      '─────────────────────────\n' +
+      (briefing || 'Não disponível') + '\n' +
+      '─────────────────────────\n' +
+      'MentorMatch Lead Engine';
+
+    await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 300,
+        mcp_servers: [{ type: 'url', url: 'https://gmail.mcp.claude.com/mcp', name: 'gmail' }],
+        system: 'Você envia e-mails via Gmail exatamente como solicitado.',
+        messages: [{ role: 'user', content: 'Envie e-mail para jonatan.souza@mentormatch.com.br. Assunto: 🎯 Novo Lead MentorMatch — ' + (S.user.name || 'Lead') + '. Corpo: ' + emailBody }]
+      })
+    });
+  } catch(e) { console.warn('Email error:', e); }
+
+  $('fw-email-wrap').innerHTML = '<div style="font-family:var(--sans);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.35)">Recebido — entraremos em contato em breve</div>';
+}
+
 /* ═══════════════ INIT ═══════════════ */
 async function init() {
+  // Auto-start audio on first interaction
+
   await sleep(600);
   $('fade').classList.add('gone');
   await sleep(1400);
+  // Create session in Supabase
+  try {
+    const res = await supaInsert('sessions', { last_step: 'inicio' });
+    if (res?.[0]?.id) S.session_id = res[0].id;
+  } catch(e) { console.warn('Supabase init:', e); }
   await nextGather();
 }
+
 
 init();
 </script>
