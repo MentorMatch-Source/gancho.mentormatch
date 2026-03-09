@@ -290,19 +290,18 @@ function renderFunnel(sessions) {
   const strengths = sessions.filter(s => ['strengths','closing','completed'].includes(s.last_step)).length;
   const contacts = sessions.filter(s => s.contact).length;
 
-  const set = (id, val) => {
-    $(id + '-bar').style.width = Math.round(val / total * 100) + '%';
-    $(id + '-count').textContent = val;
-  };
-  $('fb-total').style.width = '100%'; $('fc-total').textContent = total;
-  set('fc-quiz', quiz);  $('fb-quiz').style.width = Math.round(quiz/total*100) + '%';
-  set('fc-strengths', strengths); $('fb-strengths').style.width = Math.round(strengths/total*100) + '%';
-  set('fc-contact', contacts); $('fb-contact').style.width = Math.round(contacts/total*100) + '%';
+  function setBar(barId, countId, val) {
+    const bar = $(barId);
+    const count = $(countId);
+    if (bar) bar.style.width = Math.round(val / total * 100) + '%';
+    if (count) count.textContent = val;
+  }
 
-  // fix - just set directly
-  $('fc-quiz').textContent = quiz;
-  $('fc-strengths').textContent = strengths;
-  $('fc-contact').textContent = contacts;
+  setBar('fb-total', 'fc-total', total);
+  $('fb-total').style.width = '100%';
+  setBar('fb-quiz', 'fc-quiz', quiz);
+  setBar('fb-strengths', 'fc-strengths', strengths);
+  setBar('fb-contact', 'fc-contact', contacts);
 }
 
 function renderStrengths(sessions) {
