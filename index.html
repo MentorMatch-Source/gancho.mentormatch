@@ -1169,21 +1169,74 @@ async function farewell(yes) {
   if (emailWrap) {
     emailWrap.style.display = 'block';
     const inp = $('fw-email');
+    inp.value = '';
     if (yes) {
-      inp.type = 'tel'; inp.placeholder = 'WhatsApp com DDD'; inp.autocomplete = 'tel';
+      inp.type = 'tel'; inp.placeholder = '(11) 99999-9999'; inp.autocomplete = 'tel';
+      inp.inputMode = 'numeric';
+      maskPhone(inp);
     } else {
       inp.type = 'email'; inp.placeholder = 'Seu melhor e-mail'; inp.autocomplete = 'email';
+      inp.inputMode = 'email';
+      maskEmail(inp);
     }
+
   }
   $('farewell-screen').classList.add('on');
 }
 
+/* ═══════════════ MÁSCARAS ═══════════════ */
+function applyPhoneMask(v) {
+  v = v.replace(/\D/g, '').slice(0, 11);
+  if (v.length <= 2)  return v.length ? '(' + v : '';
+  if (v.length <= 6)  return '(' + v.slice(0,2) + ') ' + v.slice(2);
+  if (v.length <= 10) return '(' + v.slice(0,2) + ') ' + v.slice(2,6) + '-' + v.slice(6);
+  return '(' + v.slice(0,2) + ') ' + v.slice(2,7) + '-' + v.slice(7);
+}
+
+function maskPhone(inp) {
+  inp.oninput = function() {
+    const pos = this.selectionStart;
+    const oldLen = this.value.length;
+    this.value = applyPhoneMask(this.value);
+    const diff = this.value.length - oldLen;
+    this.setSelectionRange(pos + diff, pos + diff);
+  };
+  inp.onkeydown = function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); submitLead(); return; }
+    if (e.key === 'Backspace') {
+      const pos = this.selectionStart;
+      const ch = this.value[pos - 1];
+      if (ch && /\D/.test(ch)) {
+        e.preventDefault();
+        this.value = this.value.slice(0, pos - 1) + this.value.slice(pos);
+        this.value = applyPhoneMask(this.value);
+        this.setSelectionRange(pos - 1, pos - 1);
+      }
+    }
+  };
+}
+
+function maskEmail(inp) {
+  inp.oninput = function() {
+    const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.value);
+    this.style.borderBottomColor = this.value.length > 5
+      ? (valid ? 'rgba(200,30,30,.8)' : 'rgba(255,255,255,.15)')
+      : '';
+  };
+  inp.onkeydown = function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); submitLead(); }
+  };
+}
+
 /* ═══════════════ SUBMIT LEAD ═══════════════ */
 async function submitLead() {
-  const v = $('fw-email').value.trim();
-  if (!v) return;
+  const inp = $('fw-email');
+  const raw = inp.value.trim();
+  if (!raw) return;
+  const isWhatsapp = inp.type === 'tel';
+  // Salva telefone apenas com dígitos, e-mail como está
+  const v = isWhatsapp ? raw.replace(/\D/g, '') : raw;
   S.user.contact = v;
-  const isWhatsapp = $('fw-email').type === 'tel';
 
   $('fw-email-wrap').innerHTML = '<div style="font-family:var(--sans);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.28)">Analisando perfil...</div>';
 
