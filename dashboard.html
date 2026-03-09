@@ -326,12 +326,14 @@ function renderFunnel(sessions) {
 /* ── ABANDONO POR ETAPA ── */
 function renderAbandon(sessions) {
   const total = sessions.length || 1;
+  // Apenas sessões que saíram naquela etapa = last_step é aquela etapa E não completaram
+  const dropped = s => !s.completed;
   const steps = [
-    { label: 'Na tela inicial', count: sessions.filter(s => !s.last_step || s.last_step === 'inicio').length },
-    { label: 'Antes do quiz', count: sessions.filter(s => s.last_step === 'decision' || s.accepted_quiz === false).length },
-    { label: 'Durante o quiz', count: sessions.filter(s => s.last_step === 'quiz').length },
-    { label: 'Após ver fortes', count: sessions.filter(s => s.last_step === 'strengths').length },
-    { label: 'Na oferta de mentoria', count: sessions.filter(s => s.last_step === 'closing').length },
+    { label: 'Na tela inicial',        count: sessions.filter(s => dropped(s) && (!s.last_step || s.last_step === 'inicio')).length },
+    { label: 'Recusaram o quiz',       count: sessions.filter(s => dropped(s) && (s.last_step === 'decision' || s.accepted_quiz === false)).length },
+    { label: 'Abandonaram o quiz',     count: sessions.filter(s => dropped(s) && s.last_step === 'quiz').length },
+    { label: 'Após ver pontos fortes', count: sessions.filter(s => dropped(s) && s.last_step === 'strengths').length },
+    { label: 'Na oferta de mentoria',  count: sessions.filter(s => dropped(s) && s.last_step === 'closing').length },
   ];
   const chart = $('abandon-chart');
   chart.innerHTML = steps.map(({label, count}) => `
