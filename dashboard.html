@@ -307,8 +307,10 @@ function renderFunnel(sessions) {
 function renderStrengths(sessions) {
   const counts = {};
   sessions.forEach(s => {
-    if (Array.isArray(s.strengths)) {
-      s.strengths.forEach(str => { counts[str] = (counts[str] || 0) + 1; });
+    if (Array.isArray(s.strengths) && s.strengths.length > 0) {
+      // Conta apenas o trait dominante (primeiro da lista)
+      const dominant = s.strengths[0];
+      counts[dominant] = (counts[dominant] || 0) + 1;
     }
   });
   const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
