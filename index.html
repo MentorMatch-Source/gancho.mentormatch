@@ -49,17 +49,7 @@ html, body {
 /* ═══════════════════════════════════════
    LOGO
 ═══════════════════════════════════════ */
-#logo {
-  position: fixed; top: 18px; left: 36px;
-  font-family: var(--sans);
-  font-size: 11px;
-  font-weight: 400;
-  letter-spacing: .28em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,.28);
-  z-index: 400;
-}
-#logo span { color: rgba(255,255,255,.7); }
+
 
 /* Edição/número — editorial detail */
 #edition {
@@ -853,8 +843,7 @@ html, body {
 <!-- Red masthead strip -->
 <div id="masthead"></div>
 
-<!-- Logo -->
-<div id="logo"><span>Mentor</span>Match</div>
+
 <div id="edition"></div>
 
 <!-- Progress -->
@@ -1501,11 +1490,11 @@ async function submitLead(yes) {
 </body>
 </html>`;
 
-      await fetch('https://api.resend.com/emails', {
+      await fetch(SUPA_URL + '/functions/v1/send-email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer re_z6aNx5RT_9PHVmhLJq5T4pVGik7Y8bXTg'
+          'Authorization': 'Bearer ' + SUPA_KEY
         },
         body: JSON.stringify({
           from: 'MentorMatch <concierge@mentormatch.com.br>',
