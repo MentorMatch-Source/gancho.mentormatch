@@ -672,9 +672,10 @@ html, body {
   font-size: 10px;
   letter-spacing: .24em;
   text-transform: uppercase;
-  color: rgba(255,255,255,.22);
-  border: 1px solid rgba(255,255,255,.08);
-  padding: 14px 32px;
+  color: rgba(255,255,255,.18);
+  border-top: 1px solid rgba(255,255,255,.06);
+  padding-top: 24px;
+  margin-top: 8px;
 }
 
 /* ═══════════════════════════════════════
@@ -694,6 +695,133 @@ html, body {
 /* ── Responsive / Mobile First ── */
 #choices-area { max-width: 520px; width: 100%; }
 #input-area { max-width: 520px; width: 100%; }
+
+/* ═══════════════════════════════════════
+   INTAKE SCREEN — coleta inicial
+═══════════════════════════════════════ */
+#intake-screen {
+  position: fixed; inset: 0;
+  background: var(--ink);
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 28px;
+  transition: opacity .8s ease, transform .8s ease;
+}
+#intake-screen.gone {
+  opacity: 0;
+  transform: translateY(-16px);
+  pointer-events: none;
+}
+#intake-inner {
+  max-width: 420px;
+  width: 100%;
+}
+#intake-cat {
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: .28em;
+  text-transform: uppercase;
+  color: var(--red);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+#intake-cat::before {
+  content: '';
+  display: inline-block;
+  width: 20px; height: 1px;
+  background: var(--red);
+}
+#intake-headline {
+  font-family: var(--serif);
+  font-size: clamp(22px, 2.8vw, 32px);
+  font-weight: 400;
+  color: rgba(255,255,255,.88);
+  line-height: 1.45;
+  margin-bottom: 16px;
+}
+#intake-sub {
+  font-family: var(--body);
+  font-size: 15px;
+  color: rgba(255,255,255,.38);
+  line-height: 1.82;
+  margin-bottom: 44px;
+}
+.intake-field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 28px;
+  border-bottom: 1px solid rgba(255,255,255,.12);
+  transition: border-color .3s;
+}
+.intake-field:focus-within {
+  border-color: rgba(255,255,255,.35);
+}
+.intake-label {
+  font-family: var(--sans);
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--red);
+  margin-bottom: 8px;
+}
+.intake-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--body);
+  font-size: 16px;
+  font-weight: 400;
+  color: rgba(255,255,255,.78);
+  padding: 8px 0 14px;
+  width: 100%;
+}
+.intake-input::placeholder {
+  color: rgba(255,255,255,.16);
+}
+#intake-rule {
+  width: 100%;
+  height: 1px;
+  background: rgba(255,255,255,.06);
+  margin: 28px 0 24px;
+}
+#intake-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.35);
+  padding: 0;
+  margin-top: 20px;
+  transition: color .2s;
+}
+#intake-btn::after { content: '→'; font-size: 14px; transition: transform .2s; }
+#intake-btn:hover { color: rgba(255,255,255,.8); }
+#intake-btn:hover::after { transform: translateX(5px); }
+#intake-error {
+  font-family: var(--sans);
+  font-size: 10px;
+  letter-spacing: .12em;
+  color: var(--red);
+  margin-top: 12px;
+  opacity: 0;
+  transition: opacity .3s;
+  min-height: 16px;
+}
+#intake-error.on { opacity: 1; }
 
 @media (max-width: 700px) {
   #content-panel { padding: 72px 20px 80px; }
@@ -786,7 +914,33 @@ html, body {
     <input id="fw-email" type="email" placeholder="Seu melhor e-mail" autocomplete="email" />
     <button id="fw-email-btn" onclick="submitLead()">Confirmar</button>
   </div>
-  <div id="fw-badge">✦ Grupo Seleto · Acesso por Curadoria ✦</div>
+  <div id="fw-badge">Lista fechada · Seleção por perfil</div>
+</div>
+
+<!-- Intake screen — coleta inicial -->
+<div id="intake-screen">
+  <div id="intake-inner">
+    <div id="intake-cat">MentorMatch</div>
+    <h1 id="intake-headline">Sua análise de perfil<br>começa aqui.</h1>
+    <p id="intake-sub">Em menos de 5 minutos, você vai descobrir os 5 padrões que definem como você pensa, decide e lidera — e o que isso significa para o próximo nível do seu negócio.</p>
+
+
+    <div class="intake-field">
+      <div class="intake-label">Nome</div>
+      <input class="intake-input" id="in-name" type="text" placeholder="Seu nome completo" autocomplete="name" />
+    </div>
+    <div class="intake-field">
+      <div class="intake-label">E-mail</div>
+      <input class="intake-input" id="in-email" type="email" placeholder="seu@email.com" autocomplete="email" inputmode="email" />
+    </div>
+    <div class="intake-field">
+      <div class="intake-label">WhatsApp</div>
+      <input class="intake-input" id="in-phone" type="tel" placeholder="(11) 99999-9999" autocomplete="tel" inputmode="numeric" />
+    </div>
+
+    <button id="intake-btn" onclick="submitIntake()">Iniciar análise</button>
+    <div id="intake-error"></div>
+  </div>
 </div>
 
 <!-- Sound -->
@@ -810,8 +964,7 @@ const STRENGTHS = {
 };
 
 const GATHER = [
-  { k:'name',   p:'Seu nome…',                        q: () => 'Poucos empresários chegam até aqui.<br><br>Os que chegam, geralmente têm algo em comum: já foram longe, mas sabem que o próximo nível exige mais do que esforço — exige clareza sobre quem você realmente é como líder.<br><br>Com quem tenho o prazer de falar?' },
-  { k:'sector', p:'Ex: tecnologia, saúde, varejo…',   q: d => `${d.name}, ótimo. Em que setor você atua?` },
+  { k:'sector', p:'Ex: tecnologia, saúde, varejo…',   q: d => `${d.name}, boa escolha.<br><br>Líderes que chegam ao próximo nível não são os que trabalham mais — são os que conhecem com precisão onde sua energia gera resultado real.<br><br>É isso que vamos mapear agora.<br><br>Primeiro: em que setor você atua?` },
   { k:'block',  p:'Descreva em uma frase…',           q: d => `Última pergunta antes de irmos para o que importa, ${d.name}.<br><br>Qual é o principal desafio entre você e o próximo nível do seu negócio?` },
 ];
 
@@ -1004,7 +1157,6 @@ async function doSend() {
   hideAll();
 
   const reactions = [
-    null,
     'Que área interessante.',
     'Esse nível de consciência é raro.'
   ];
@@ -1025,7 +1177,9 @@ async function decisionPhase() {
     last_step: 'decision',
     name: S.user.name,
     sector: S.user.sector,
-    block: S.user.block
+    block: S.user.block,
+    contact: S.user.contact,
+    contact_type: S.user.contact_type
   }).catch(()=>{});
   hideAll();
   await chapter('I', 'Seu perfil de liderança', 'Em 8 perguntas, vamos identificar os 5 padrões que definem como você pensa e decide.');
@@ -1143,7 +1297,7 @@ async function closingPhase() {
   S.phase = 'closing';
   if (S.session_id) supaUpdate(S.session_id, { last_step: 'closing' }).catch(()=>{});
   $('speech-block').classList.add('on');
-  await say(`${S.user.name || 'você'}, esses cinco padrões que você acabou de ver são exatamente o que nossos mentores buscam em quem escolhem trabalhar.<br><br>Temos mentores especializados compatíveis com o seu perfil. Posso te incluir na lista para o próximo ciclo?`, 20);
+  await say(`${S.user.name || 'você'}, o MentorMatch organiza eventos fechados entre empresários selecionados a dedo.<br><br>Os convites não são públicos — saem a partir de uma lista restrita que montamos com base no perfil de cada pessoa.<br><br>Posso incluir você nessa lista?`, 20);
   await sleep(300);
   showChoices([
     { l: 'Sim, quero participar' },
@@ -1155,35 +1309,27 @@ async function closingPhase() {
 async function farewell(yes) {
   hideAll();
   const firstName = (S.user.name || '').split(' ')[0];
-  if (yes) {
-    await say('Ótimo. Para finalizar, preciso do seu WhatsApp para nossa equipe entrar em contato.', 20);
-    await sleep(2200);
-  } else {
-    await say(`Sem problemas, ${firstName || 'você'}. Se mudar de ideia, deixa seu e-mail e te avisamos quando abrir uma vaga para o seu perfil.`, 20);
-    await sleep(2200);
-  }
-  $('fw-issue').textContent = yes ? 'MentorMatch · Inscrição' : 'MentorMatch · Lista de Espera';
-  $('fw-headline').textContent = yes ? `Quase lá, ${firstName || ''}.` : `${firstName || 'você'}, a porta continua aberta.`;
-  $('fw-body').innerHTML = yes
-    ? `Informe seu WhatsApp e nossa equipe entra em contato para confirmar sua participação.`
-    : `Quando uma vaga compatível com o seu perfil abrir, você será o primeiro a saber.`;
-  const emailWrap = $('fw-email-wrap');
-  if (emailWrap) {
-    emailWrap.style.display = 'block';
-    const inp = $('fw-email');
-    inp.value = '';
-    if (yes) {
-      inp.type = 'tel'; inp.placeholder = '(11) 99999-9999'; inp.autocomplete = 'tel';
-      inp.inputMode = 'numeric';
-      maskPhone(inp);
-    } else {
-      inp.type = 'email'; inp.placeholder = 'Seu melhor e-mail'; inp.autocomplete = 'email';
-      inp.inputMode = 'email';
-      maskEmail(inp);
-    }
+  S.user.accepted_mentoring = yes;
 
+  if (yes) {
+    await say(`${firstName}, anotado.`, 20);
+  } else {
+    await say(`Sem problemas, ${firstName || 'você'}. Quando abrir uma vaga compatível com o seu perfil, você será o primeiro a saber.`, 20);
   }
+  await sleep(1200);
+
+  $('fw-issue').textContent = yes ? 'MentorMatch' : 'MentorMatch';
+  $('fw-headline').textContent = yes ? `${firstName || ''}, você está na lista.` : `${firstName || ''}, entendido.`;
+  $('fw-body').innerHTML = yes
+    ? `Quando houver um evento adequado ao seu perfil, você receberá um convite direto. A seleção é feita pela nossa equipe, caso a caso.`
+    : `Se identificarmos um evento certo para o seu perfil, entraremos em contato.`;
+
+  const emailWrap = $('fw-email-wrap');
+  if (emailWrap) { emailWrap.style.display = 'none'; }
+
   $('farewell-screen').classList.add('on');
+  // Salvar lead completo agora
+  submitLead(yes);
 }
 
 /* ═══════════════ MÁSCARAS ═══════════════ */
@@ -1231,16 +1377,8 @@ function maskEmail(inp) {
 }
 
 /* ═══════════════ SUBMIT LEAD ═══════════════ */
-async function submitLead() {
-  const inp = $('fw-email');
-  const raw = inp.value.trim();
-  if (!raw) return;
-  const isWhatsapp = inp.type === 'tel';
-  // Salva telefone apenas com dígitos, e-mail como está
-  const v = isWhatsapp ? raw.replace(/\D/g, '') : raw;
-  S.user.contact = v;
-
-  $('fw-email-wrap').innerHTML = '<div style="font-family:var(--sans);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.28)">Analisando perfil...</div>';
+async function submitLead(yes) {
+  const isWhatsapp = true; // always whatsapp now (collected upfront)
 
   let briefing = '';
   try {
@@ -1272,7 +1410,7 @@ async function submitLead() {
       contact_type: isWhatsapp ? 'whatsapp' : 'email',
       quiz_answers: S.qAns,
       strengths: S.strengths,
-      accepted_mentoring: isWhatsapp,
+      accepted_mentoring: !!yes,
       ai_briefing: briefing
     };
     if (S.session_id) {
@@ -1283,51 +1421,148 @@ async function submitLead() {
     }
   } catch(e) { console.warn('Supabase save error:', e); }
 
-  // Step 3 — Enviar e-mail via Gmail MCP
-  try {
-    const emailBody =
-      'NOVO LEAD — MentorMatch\n\n' +
-      'Nome: ' + (S.user.name || '—') + '\n' +
-      (isWhatsapp ? 'WhatsApp: ' : 'E-mail: ') + S.user.contact + '\n' +
-      'Setor: ' + (S.user.sector || '—') + '\n' +
-      'Desafio: ' + (S.user.block || '—') + '\n' +
-      'Pontos fortes: ' + S.strengths.join(', ') + '\n\n' +
-      '─────────────────────────\n' +
-      'ANÁLISE DE IA\n' +
-      '─────────────────────────\n' +
-      (briefing || 'Não disponível') + '\n' +
-      '─────────────────────────\n' +
-      'MentorMatch Lead Engine';
+  // Montar conteúdo dos pontos fortes para envio ao lead
+  const firstName = (S.user.name || '').split(' ')[0];
+  const strengthLines = S.strengths.map((s, i) => {
+    const d = STRENGTHS[s] || {};
+    return (i+1) + '. ' + s + '\n' + (d.desc || '') + '\n';
+  }).join('\n');
 
-    await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 300,
-        mcp_servers: [{ type: 'url', url: 'https://gmail.mcp.claude.com/mcp', name: 'gmail' }],
-        system: 'Você envia e-mails via Gmail exatamente como solicitado.',
-        messages: [{ role: 'user', content: 'Envie e-mail para jonatan.souza@mentormatch.com.br. Assunto: 🎯 Novo Lead MentorMatch — ' + (S.user.name || 'Lead') + '. Corpo: ' + emailBody }]
-      })
-    });
-  } catch(e) { console.warn('Email error:', e); }
+  // Step 3 — E-mail HTML para o lead com seus pontos fortes
+  if (S.user.email) {
+    try {
+      const strengthHTML = S.strengths.map((s, i) => {
+        const d = STRENGTHS[s] || {};
+        return `<tr>
+          <td style="padding: 24px 0; border-bottom: 1px solid #1e1e1e;">
+            <div style="font-family: 'Georgia', serif; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: #7a2020; margin-bottom: 6px;">0${i+1}</div>
+            <div style="font-family: 'Georgia', serif; font-size: 20px; color: #f0ece4; font-weight: normal; margin-bottom: 8px;">${s}</div>
+            <div style="font-family: 'Georgia', serif; font-size: 14px; color: #6b6358; line-height: 1.8;">${d.desc || ''}</div>
+          </td>
+        </tr>`;
+      }).join('');
+
+      const htmlEmail = `<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#0c0b09;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0c0b09;">
+    <tr><td align="center" style="padding: 60px 20px;">
+      <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
+
+        <!-- Topo vermelho -->
+        <tr><td style="height:3px;background:#9b1c1c;"></td></tr>
+
+        <!-- Header -->
+        <tr><td style="padding: 40px 0 32px;">
+          <div style="font-family: Arial, sans-serif; font-size: 10px; letter-spacing: 0.28em; text-transform: uppercase; color: rgba(255,255,255,0.25);">MENTORMATCH</div>
+        </td></tr>
+
+        <!-- Saudação -->
+        <tr><td style="padding-bottom: 40px; border-bottom: 1px solid #1e1e1e;">
+          <div style="font-family: 'Georgia', serif; font-size: 28px; color: rgba(255,255,255,0.88); font-weight: normal; line-height: 1.3; margin-bottom: 16px;">${firstName},</div>
+          <div style="font-family: 'Georgia', serif; font-size: 15px; color: #6b6358; line-height: 1.8;">Sua análise de perfil está abaixo.<br>Estes são os cinco padrões que definem como você pensa, decide e lidera.</div>
+        </td></tr>
+
+        <!-- Pontos Fortes -->
+        <tr><td>
+          <table width="100%" cellpadding="0" cellspacing="0">
+            ${strengthHTML}
+          </table>
+        </td></tr>
+
+        <!-- Rodapé -->
+        <tr><td style="padding: 40px 0 0;">
+          <div style="font-family: 'Georgia', serif; font-size: 13px; color: #3a3530; line-height: 1.8; border-top: 1px solid #1e1e1e; padding-top: 32px;">
+            Você está na nossa lista.<br>
+            Quando houver um evento adequado ao seu perfil, você receberá um convite.
+          </div>
+          <div style="margin-top: 32px; font-family: Arial, sans-serif; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(255,255,255,0.15);">MentorMatch</div>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+      await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer re_z6aNx5RT_9PHVmhLJq5T4pVGik7Y8bXTg'
+        },
+        body: JSON.stringify({
+          from: 'MentorMatch <concierge@mentormatch.com.br>',
+          to: [S.user.email],
+          subject: 'Seu perfil — MentorMatch',
+          html: htmlEmail
+        })
+      });
+    } catch(e) { console.warn('Email lead error:', e); }
+  }
+
 
   $('fw-email-wrap').innerHTML = '<div style="font-family:var(--sans);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.35)">Recebido — entraremos em contato em breve</div>';
 }
 
-/* ═══════════════ INIT ═══════════════ */
-async function init() {
-  // Auto-start audio on first interaction
+/* ═══════════════ INTAKE ═══════════════ */
+function applyPhoneMaskIntake(inp) {
+  inp.oninput = function() {
+    let v = this.value.replace(/\D/g, '').slice(0, 11);
+    if (v.length <= 2)  this.value = v.length ? '(' + v : '';
+    else if (v.length <= 6)  this.value = '(' + v.slice(0,2) + ') ' + v.slice(2);
+    else if (v.length <= 10) this.value = '(' + v.slice(0,2) + ') ' + v.slice(2,6) + '-' + v.slice(6);
+    else this.value = '(' + v.slice(0,2) + ') ' + v.slice(2,7) + '-' + v.slice(7);
+  };
+  inp.onkeydown = function(e) { if (e.key === 'Enter') submitIntake(); };
+}
 
-  await sleep(600);
-  $('fade').classList.add('gone');
-  await sleep(1400);
-  // Create session in Supabase
+async function submitIntake() {
+  const name  = $('in-name').value.trim();
+  const email = $('in-email').value.trim();
+  const phone = $('in-phone').value.trim();
+  const err   = $('intake-error');
+
+  if (!name) { err.textContent = 'Informe seu nome para continuar.'; err.classList.add('on'); $('in-name').focus(); return; }
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { err.textContent = 'Informe um e-mail válido.'; err.classList.add('on'); $('in-email').focus(); return; }
+  if (!phone || phone.replace(/\D/g,'').length < 10) { err.textContent = 'Informe um WhatsApp válido.'; err.classList.add('on'); $('in-phone').focus(); return; }
+
+  err.classList.remove('on');
+  S.user.name    = name.charAt(0).toUpperCase() + name.slice(1);
+  S.user.email   = email;
+  S.user.contact = phone.replace(/\D/g,'');
+  S.user.contact_type = 'whatsapp';
+
+  // Salvar sessão inicial com contato
   try {
-    const res = await supaInsert('sessions', { last_step: 'inicio' });
+    const res = await supaInsert('sessions', {
+      last_step: 'inicio',
+      name: S.user.name,
+      contact: S.user.contact,
+      contact_type: 'whatsapp'
+    });
     if (res?.[0]?.id) S.session_id = res[0].id;
   } catch(e) { console.warn('Supabase init:', e); }
+
+  $('intake-screen').classList.add('gone');
+  await sleep(1000);
+  $('intake-screen').style.display = 'none';
+  await sleep(400);
   await nextGather();
+}
+
+/* ═══════════════ INIT ═══════════════ */
+async function init() {
+  await sleep(600);
+  $('fade').classList.add('gone');
+  // Apply phone mask to intake input
+  applyPhoneMaskIntake($('in-phone'));
+  // Focus first field
+  setTimeout(() => $('in-name').focus(), 800);
+  // Allow Enter key on all intake fields
+  $('in-name').onkeydown  = e => { if (e.key === 'Enter') $('in-email').focus(); };
+  $('in-email').onkeydown = e => { if (e.key === 'Enter') $('in-phone').focus(); };
 }
 
 
