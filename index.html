@@ -57,7 +57,7 @@ html, body {
   letter-spacing: .28em;
   text-transform: uppercase;
   color: rgba(255,255,255,.28);
-  z-index: 90;
+  z-index: 400;
 }
 #logo span { color: rgba(255,255,255,.7); }
 
@@ -805,7 +805,7 @@ html, body {
   text-transform: uppercase;
   color: rgba(255,255,255,.35);
   padding: 0;
-  margin-top: 20px;
+  margin-top: 48px;
   transition: color .2s;
 }
 #intake-btn::after { content: '→'; font-size: 14px; transition: transform .2s; }
@@ -828,8 +828,23 @@ html, body {
   #str-wrap { grid-template-columns: 1fr; padding: 60px 24px 80px; }
   .str-item:nth-child(even) { padding: 28px 0; border-left: none; }
   #str-header { flex-direction: column; align-items: flex-start; gap: 12px; }
-  #str-sub { text-align: left; max-width: 100%; }
+  #str-sub { text-align: left; max-width: 100%; font-size: 15px; }
   #str-headline { max-width: 100%; }
+
+  /* Legibilidade mobile — ajustes moderados */
+  #speech-text       { font-size: clamp(24px, 2.4vw, 30px); }
+  .ch-subtitle-txt   { font-size: clamp(15px, 1.4vw, 16px); }
+  .choice-text       { font-size: 17px; }
+  #str-mirror        { font-size: 16px; }
+  .str-desc          { font-size: 15px; }
+  .str-tips          { font-size: 14px; }
+  #fw-email          { font-size: 16px; }
+
+  /* Intake screen — página inicial */
+  #intake-headline   { font-size: clamp(26px, 2.8vw, 36px); }
+  #intake-sub        { font-size: 18px; }
+  .intake-label      { font-size: 11px; }
+  #intake-btn        { font-size: 13px; }
 }
 </style>
 </head>
