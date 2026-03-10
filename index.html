@@ -1054,6 +1054,17 @@ async function supaUpdate(id, data) {
   } catch(e) {}
 }
 
+async function supaFindByEmail(email) {
+  if (!SUPA_READY || !email) return null;
+  try {
+    const r = await fetch(SUPA_URL + '/rest/v1/sessions?email=eq.' + encodeURIComponent(email) + '&order=created_at.desc&limit=1', {
+      headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
+    });
+    const data = await r.json();
+    return Array.isArray(data) && data.length ? data[0] : null;
+  } catch(e) { return null; }
+}
+
 /* ═══════════════ STATE ═══════════════ */
 let S = { phase:'gather', gStep:0, user:{}, qStep:0, qAns:[], strengths:[], session_id: null };
 
@@ -1408,6 +1419,7 @@ async function submitLead(yes) {
       last_step: 'completed',
       completed: true,
       name: S.user.name,
+      email: S.user.email,
       sector: S.user.sector,
       block: S.user.block,
       contact: S.user.contact,
@@ -1433,60 +1445,114 @@ async function submitLead(yes) {
   }).join('\n');
 
   // Step 3 — E-mail HTML para o lead com seus pontos fortes
+  const confirmLink = S.session_id
+    ? 'https://mentormatch-source.github.io/gancho.mentormatch/?c=' + S.session_id
+    : null;
+
   if (S.user.email) {
     try {
       const strengthHTML = S.strengths.map((s, i) => {
         const d = STRENGTHS[s] || {};
         return `<tr>
-          <td style="padding: 24px 0; border-bottom: 1px solid #1e1e1e;">
-            <div style="font-family: 'Georgia', serif; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: #7a2020; margin-bottom: 6px;">0${i+1}</div>
-            <div style="font-family: 'Georgia', serif; font-size: 20px; color: #f0ece4; font-weight: normal; margin-bottom: 8px;">${s}</div>
-            <div style="font-family: 'Georgia', serif; font-size: 14px; color: #6b6358; line-height: 1.8;">${d.desc || ''}</div>
+          <td bgcolor="#0c0b09" style="background-color:#0c0b09;padding:24px 0;border-bottom:1px solid #1a1815;">
+            <p style="font-family:Georgia,serif;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#7a2020;margin:0 0 8px 0;">0${i+1}</p>
+            <p style="font-family:Georgia,serif;font-size:19px;color:#ece8e1;font-weight:normal;line-height:1.3;margin:0 0 10px 0;">${s}</p>
+            <p style="font-family:Georgia,serif;font-size:14px;color:#6b6358;line-height:1.85;margin:0;">${d.desc || ''}</p>
           </td>
         </tr>`;
       }).join('');
 
+      const footerBlock = yes
+        ? `<tr><td bgcolor="#0c0b09" style="background-color:#0c0b09;padding:32px 0 0;border-top:1px solid #1e1e1e;">
+            <p style="font-family:Georgia,serif;font-size:13px;color:#4a4540;line-height:1.8;margin:0;">
+              Você está na nossa lista.<br>
+              Quando houver um evento adequado ao seu perfil, você receberá um convite.
+            </p>
+           </td></tr>`
+        : `<tr><td bgcolor="#0c0b09" style="background-color:#0c0b09;padding:40px 0 0;border-top:1px solid #1e1e1e;">
+            <p style="font-family:Georgia,serif;font-size:13px;color:#4a4540;line-height:1.8;margin:0 0 28px 0;font-style:italic;">
+              Há algo que gostaríamos de mencionar antes de encerrarmos.
+            </p>
+            <p style="font-family:Georgia,serif;font-size:15px;color:#c8c0b4;line-height:1.9;margin:0 0 24px 0;">
+              O MentorMatch mantém uma lista restrita de empresários — curada por perfil, não por cargo — que são considerados com prioridade para os próximos eventos fechados da plataforma.
+            </p>
+            <p style="font-family:Georgia,serif;font-size:14px;color:#6b6358;line-height:1.9;margin:0 0 32px 0;">
+              Seu perfil reúne as características que buscamos. Se tiver interesse em fazer parte desta lista, basta nos indicar. Faremos a avaliação com o cuidado que cada perfil merece — e quando identificarmos o momento certo, você receberá um convite diretamente.
+            </p>
+            ${confirmLink ? `
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:32px;">
+              <tr><td align="center" bgcolor="#0c0b09" style="background-color:#0c0b09;">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                  <tr><td bgcolor="#C9A84C" style="background-color:#C9A84C;border-radius:2px;">
+                    <a href="${confirmLink}" style="display:inline-block;font-family:Georgia,serif;font-size:13px;font-weight:600;letter-spacing:0.06em;color:#0c0b09;text-decoration:none;padding:15px 34px;">
+                      Tenho interesse
+                    </a>
+                  </td></tr>
+                </table>
+              </td></tr>
+            </table>` : ''}
+            <p style="font-family:Georgia,serif;font-size:12px;color:#2a2520;font-style:italic;line-height:1.8;margin:0;">
+              A lista não é pública. Os convites são enviados de forma direta, quando identificamos o momento e o evento certos para o seu perfil.
+            </p>
+           </td></tr>`;
+
       const htmlEmail = `<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"></head>
-<body style="margin:0;padding:0;background:#0c0b09;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0c0b09;">
-    <tr><td align="center" style="padding: 60px 20px;">
-      <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="color-scheme" content="light only">
+  <meta name="supported-color-schemes" content="light only">
+  <style>
+    :root { color-scheme: light only; }
+    body { margin:0!important; padding:0!important; background-color:#0c0b09!important; }
+    * { -webkit-text-size-adjust:none; }
+  </style>
+</head>
+<body bgcolor="#0c0b09" style="margin:0;padding:0;background-color:#0c0b09;">
+<!-- Gmail strips <body>, this div ensures the dark bg survives -->
+<div style="background-color:#0c0b09;margin:0;padding:0;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#0c0b09" style="background-color:#0c0b09;">
+  <tr>
+    <td bgcolor="#0c0b09" align="center" style="background-color:#0c0b09;padding:60px 20px;">
+      <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" bgcolor="#0c0b09" style="background-color:#0c0b09;max-width:560px;width:100%;">
 
-        <!-- Topo vermelho -->
-        <tr><td style="height:3px;background:#9b1c1c;"></td></tr>
+        <!-- Barra vermelha -->
+        <tr><td bgcolor="#9b1c1c" height="3" style="background-color:#9b1c1c;font-size:0;line-height:0;">&nbsp;</td></tr>
 
-        <!-- Header -->
-        <tr><td style="padding: 40px 0 32px;">
-          <div style="font-family: Arial, sans-serif; font-size: 10px; letter-spacing: 0.28em; text-transform: uppercase; color: rgba(255,255,255,0.25);">MENTORMATCH</div>
+        <!-- Marca -->
+        <tr><td bgcolor="#0c0b09" style="background-color:#0c0b09;padding:36px 0 28px;">
+          <span style="font-family:Arial,sans-serif;font-size:10px;letter-spacing:0.28em;text-transform:uppercase;color:#3a3530;">MENTORMATCH</span>
         </td></tr>
 
         <!-- Saudação -->
-        <tr><td style="padding-bottom: 40px; border-bottom: 1px solid #1e1e1e;">
-          <div style="font-family: 'Georgia', serif; font-size: 28px; color: rgba(255,255,255,0.88); font-weight: normal; line-height: 1.3; margin-bottom: 16px;">${firstName},</div>
-          <div style="font-family: 'Georgia', serif; font-size: 15px; color: #6b6358; line-height: 1.8;">Sua análise de perfil está abaixo.<br>Estes são os cinco padrões que definem como você pensa, decide e lidera.</div>
+        <tr><td bgcolor="#0c0b09" style="background-color:#0c0b09;padding-bottom:36px;border-bottom:1px solid #1e1e1e;">
+          <p style="font-family:Georgia,serif;font-size:28px;color:#ece8e1;font-weight:normal;line-height:1.3;margin:0 0 14px 0;">${firstName},</p>
+          <p style="font-family:Georgia,serif;font-size:15px;color:#6b6358;line-height:1.8;margin:0;">
+            Sua análise de perfil está abaixo.<br>
+            Estes são os cinco padrões que definem como você pensa, decide e lidera.
+          </p>
         </td></tr>
 
-        <!-- Pontos Fortes -->
-        <tr><td>
-          <table width="100%" cellpadding="0" cellspacing="0">
+        <!-- Pontos fortes -->
+        <tr><td bgcolor="#0c0b09" style="background-color:#0c0b09;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#0c0b09" style="background-color:#0c0b09;">
             ${strengthHTML}
           </table>
         </td></tr>
 
         <!-- Rodapé -->
-        <tr><td style="padding: 40px 0 0;">
-          <div style="font-family: 'Georgia', serif; font-size: 13px; color: #3a3530; line-height: 1.8; border-top: 1px solid #1e1e1e; padding-top: 32px;">
-            Você está na nossa lista.<br>
-            Quando houver um evento adequado ao seu perfil, você receberá um convite.
-          </div>
-          <div style="margin-top: 32px; font-family: Arial, sans-serif; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(255,255,255,0.15);">MentorMatch</div>
+        ${footerBlock}
+
+        <!-- Assinatura -->
+        <tr><td bgcolor="#0c0b09" style="background-color:#0c0b09;padding-top:36px;">
+          <span style="font-family:Arial,sans-serif;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#1e1e1e;">MentorMatch</span>
         </td></tr>
 
       </table>
-    </td></tr>
-  </table>
+    </td>
+  </tr>
+</table>
+</div>
 </body>
 </html>`;
 
@@ -1499,7 +1565,7 @@ async function submitLead(yes) {
         body: JSON.stringify({
           from: 'MentorMatch <concierge@mentormatch.com.br>',
           to: [S.user.email],
-          subject: 'Seu perfil — MentorMatch',
+          subject: `Este é o seu perfil — ${firstName}`,
           html: htmlEmail
         })
       });
@@ -1538,15 +1604,28 @@ async function submitIntake() {
   S.user.contact = phone.replace(/\D/g,'');
   S.user.contact_type = 'whatsapp';
 
-  // Salvar sessão inicial com contato
+  // Salvar sessão — dedup por e-mail
   try {
-    const res = await supaInsert('sessions', {
-      last_step: 'inicio',
-      name: S.user.name,
-      contact: S.user.contact,
-      contact_type: 'whatsapp'
-    });
-    if (res?.[0]?.id) S.session_id = res[0].id;
+    const existing = await supaFindByEmail(email);
+    if (existing?.id) {
+      S.session_id = existing.id;
+      await supaUpdate(S.session_id, {
+        last_step: 'inicio',
+        name: S.user.name,
+        contact: S.user.contact,
+        contact_type: 'whatsapp',
+        email: email
+      });
+    } else {
+      const res = await supaInsert('sessions', {
+        last_step: 'inicio',
+        name: S.user.name,
+        contact: S.user.contact,
+        contact_type: 'whatsapp',
+        email: email
+      });
+      if (res?.[0]?.id) S.session_id = res[0].id;
+    }
   } catch(e) { console.warn('Supabase init:', e); }
 
   $('intake-screen').classList.add('gone');
@@ -1556,15 +1635,59 @@ async function submitIntake() {
   await nextGather();
 }
 
+/* ═══════════════ WAITLIST CONFIRM (via link) ═══════════════ */
+async function handleConfirmLink() {
+  const params = new URLSearchParams(window.location.search);
+  const sid = params.get('c');
+  if (!sid) return false;
+
+  // Busca dados do lead no Supabase para personalizar a tela
+  let firstName = '';
+  try {
+    if (SUPA_READY) {
+      const r = await fetch(
+        SUPA_URL + '/rest/v1/sessions?id=eq.' + encodeURIComponent(sid) + '&select=name,contact&limit=1',
+        { headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY } }
+      );
+      const rows = await r.json();
+      if (Array.isArray(rows) && rows.length) {
+        firstName = (rows[0].name || '').split(' ')[0];
+      }
+    }
+  } catch(e) { /* silently ignore */ }
+
+  // Atualiza registro: aceite via e-mail
+  await supaUpdate(sid, { accepted_mentoring: true, last_step: 'confirmed_via_email' });
+
+  // Esconde todas as telas
+  $('intake-screen').style.display = 'none';
+  $('strengths-screen').classList.remove('on');
+
+  // Monta a tela de confirmação com o nome do lead
+  $('fw-issue').textContent = 'MentorMatch';
+  $('fw-headline').textContent = firstName ? `${firstName}, você está na lista.` : 'Você está na lista.';
+  $('fw-body').innerHTML = 'Quando identificarmos o evento certo para o seu perfil, você receberá um convite diretamente. A seleção é feita pela nossa equipe, caso a caso.';
+
+  // Esconde o campo de e-mail (não necessário neste fluxo)
+  const emailWrap = $('fw-email-wrap');
+  if (emailWrap) emailWrap.style.display = 'none';
+
+  $('farewell-screen').classList.add('on');
+  await sleep(400);
+  $('fade').classList.add('gone');
+  return true;
+}
+
 /* ═══════════════ INIT ═══════════════ */
 async function init() {
+  // Verifica se é acesso via link de confirmação
+  const isConfirm = await handleConfirmLink();
+  if (isConfirm) return;
+
   await sleep(600);
   $('fade').classList.add('gone');
-  // Apply phone mask to intake input
   applyPhoneMaskIntake($('in-phone'));
-  // Focus first field
   setTimeout(() => $('in-name').focus(), 800);
-  // Allow Enter key on all intake fields
   $('in-name').onkeydown  = e => { if (e.key === 'Enter') $('in-email').focus(); };
   $('in-email').onkeydown = e => { if (e.key === 'Enter') $('in-phone').focus(); };
 }
